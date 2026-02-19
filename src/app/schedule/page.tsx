@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
+import PageShell from "@/src/app/components/PageShell";
 
 type Item = {
     time: string;
@@ -30,12 +31,11 @@ export default function SchedulePage() {
                 <div className="absolute -right-24 top-20 h-80 w-80 rounded-full bg-black/5 blur-3xl" />
             </div>
 
-            <section className="mx-auto max-w-4xl px-6 pb-14">
+            <PageShell>
                 <motion.div
                     initial={{ opacity: 0, y: 14 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.1 }}
-                    className="rounded-[28px] border border-zinc-200 bg-white p-8 shadow-sm sm:p-10"
                 >
                     <p className="text-xs uppercase tracking-[0.28em] text-zinc-500">
                         Event Schedule
@@ -95,7 +95,7 @@ export default function SchedulePage() {
                         </Link>
                     </div>
                 </motion.div>
-            </section>
+            </PageShell>
 
             {/* font helper (works if you set Playfair in layout.tsx variables) */}
             <style jsx global>{`

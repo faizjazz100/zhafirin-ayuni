@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
+import PageShell from "@/src/app/components/PageShell";
 
 export default function LocationPage() {
     // ✅ EDIT THESE
@@ -25,12 +26,11 @@ export default function LocationPage() {
                 <div className="absolute -right-24 top-20 h-80 w-80 rounded-full bg-black/5 blur-3xl" />
             </div>
             {/* Content */}
-            <section className="mx-auto max-w-3xl px-5 pb-14 sm:px-6">
+            <PageShell>
                 <motion.div
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.45 }}
-                    className="rounded-[28px] border border-zinc-200 bg-white p-6 shadow-sm sm:p-10"
                 >
                     <p className="text-xs uppercase tracking-[0.28em] text-zinc-500">
                         Location
@@ -118,7 +118,7 @@ export default function LocationPage() {
                         © {new Date().getFullYear()} {COUPLE}
                     </p>
                 </motion.div>
-            </section>
+            </PageShell>
 
             <style jsx global>{`
         .font-serif {

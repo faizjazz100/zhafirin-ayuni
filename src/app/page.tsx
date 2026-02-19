@@ -46,7 +46,7 @@ export default function HomePage() {
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.55 }}
-          className="overflow-hidden rounded-[28px] border border-white/40 bg-white/65 shadow-[0_20px_60px_rgba(0,0,0,0.08)] backdrop-blur-xl"
+          className="overflow-hidden rounded-[28px] border border-white/40 bg-white/65 shadow-[0_20px_60px_rgba(0,0,0,0.08)] "
         >
           <div className="grid lg:grid-cols-2">
             {/* Image */}
@@ -65,7 +65,7 @@ export default function HomePage() {
               </div>
 
               <div className="absolute bottom-4 left-4 right-4 sm:bottom-6 sm:left-6 sm:right-6">
-                <div className="rounded-3xl border border-white/25 bg-white/35 p-4 backdrop-blur-xl">
+                <div className="rounded-3xl border border-white/25 bg-white/35 p-4 ">
                   <p className="text-xs uppercase tracking-[0.28em] text-white/80">
                     The Solemnization Of
                   </p>
@@ -297,7 +297,7 @@ function SectionCard({ children, className = "" }: { children: React.ReactNode; 
   return (
     <div
       className={[
-        "rounded-[28px] border border-white/40 bg-white/65 p-6 shadow-[0_20px_60px_rgba(0,0,0,0.08)] backdrop-blur-xl sm:p-10",
+        "rounded-[28px] border border-white/40 bg-white/65 p-6 shadow-[0_20px_60px_rgba(0,0,0,0.08)]  sm:p-10",
         className,
       ].join(" ")}
     >
