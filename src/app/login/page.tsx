@@ -1,66 +1,78 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function LoginPage() {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [status, setStatus] = useState<string>("");
+  const [err, setErr] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  async function onSubmit(e: React.FormEvent) {
+  const router = useRouter();
+  const sp = useSearchParams();
+  const next = sp.get("next") || "/admin";
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) router.replace(next);
+    });
+  }, [router, next]);
+
+  async function signIn(e: React.FormEvent) {
     e.preventDefault();
-    setStatus("Signing in...");
+    setErr("");
+    setLoading(true);
 
     const { error } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
-      password
+      email,
+      password,
     });
 
-    if (error) {
-      setStatus(error.message);
-      return;
-    }
+    setLoading(false);
+    if (error) return setErr(error.message);
 
-    setStatus("✅ Signed in");
-    router.push("/admin");
+    router.replace(next);
   }
 
   return (
-    <main className="mx-auto max-w-md p-6 text-zinc-800">
-      <h1 className="text-3xl font-semibold">Admin Login</h1>
+    <main className="min-h-screen px-5 py-10 text-zinc-800">
+      <div className="mx-auto max-w-md rounded-[28px] border border-zinc-200 bg-white p-6 shadow-sm sm:p-10">
+        <h1 className="font-serif text-3xl font-semibold">Admin Login</h1>
+        <p className="mt-2 text-sm text-zinc-600">Sign in to access admin pages.</p>
 
-      <form onSubmit={onSubmit} className="mt-6 space-y-4 rounded-2xl border bg-white p-5 shadow-sm">
-        <div>
-          <label className="text-sm text-gray-600">Email</label>
+        {err ? (
+          <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            {err}
+          </div>
+        ) : null}
+
+        <form onSubmit={signIn} className="mt-6 space-y-3">
           <input
-            className="mt-1 w-full rounded-xl border p-3 text-zinc-800"
-            type="email"
+            className="w-full rounded-2xl border border-zinc-200 px-4 py-3 text-sm"
+            placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            type="email"
             required
           />
-        </div>
-
-        <div>
-          <label className="text-sm text-gray-600">Password</label>
           <input
-            className="mt-1 w-full rounded-xl border p-3 text-zinc-800"
-            type="password"
+            className="w-full rounded-2xl border border-zinc-200 px-4 py-3 text-sm"
+            placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            type="password"
             required
           />
-        </div>
-
-        <button className="w-full rounded-xl bg-black p-3 text-white">
-          Sign in
-        </button>
-
-        {status && <p className="text-sm text-gray-700">{status}</p>}
-      </form>
+          <button
+            disabled={loading}
+            className="w-full rounded-2xl bg-black px-4 py-3 text-sm text-white hover:opacity-90 disabled:opacity-50"
+          >
+            {loading ? "Signing in..." : "Sign in"}
+          </button>
+        </form>
+      </div>
     </main>
   );
 }
