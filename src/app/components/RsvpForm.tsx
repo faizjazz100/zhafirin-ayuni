@@ -2,16 +2,29 @@
 
 import { useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { useRouter } from "next/navigation";
+
 
 export type Session = "Public" | "Private";
 
-function normalizePhone(phone: string) {
-  return phone.replace(/\s|-/g, "");
+function normalizePhone(input: string) {
+  // Keep + for international, remove spaces/dashes
+  const cleaned = input.trim().replace(/[^\d+]/g, "");
+
+  // Convert common Malaysian formats to +60XXXXXXXXXX
+  // Examples:
+  // 0123456789 -> +60123456789
+  // 60123456789 -> +60123456789
+  // +60123456789 -> +60123456789
+  if (cleaned.startsWith("+60")) return cleaned;
+  if (cleaned.startsWith("60")) return `+${cleaned}`;
+  if (cleaned.startsWith("0")) return `+60${cleaned.slice(1)}`;
+  return cleaned;
 }
 
-function isValidPhone(phone: string) {
-  // Accept: 01xxxxxxxx or +601xxxxxxxx
-  return /^(?:\+?6?01)[0-9]{8,9}$/.test(phone);
+function isValidMYPhoneE164(phone: string) {
+  // +601 followed by 8-9 digits (mobile formats)
+  return /^\+601\d{8,9}$/.test(phone);
 }
 
 type Props = {
@@ -21,6 +34,7 @@ type Props = {
 export default function RsvpForm({ session }: Props) {
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
+  const router = useRouter();
 
   const [guests, setGuests] = useState(1);
   const [adults, setAdults] = useState(1);
@@ -28,44 +42,45 @@ export default function RsvpForm({ session }: Props) {
 
   const [message, setMessage] = useState("");
 
-  const [status, setStatus] = useState("");
+  const [status, setStatus] = useState<null | { type: "ok" | "err" | "info"; text: string }>(null);
   const [phoneError, setPhoneError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   const guestOptions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
+  // Adults: enforce min 1 adult (typical RSVP assumption)
   const adultOptions = useMemo(
-    () => Array.from({ length: guests + 1 }, (_, i) => i),
+    () => Array.from({ length: guests }, (_, i) => i + 1),
     [guests]
   );
 
   function handleGuestsClick(n: number) {
     setGuests(n);
-    // clamp adults to [0..n]
-    setAdults((prev) => Math.min(prev, n));
+    setAdults((prev) => Math.min(Math.max(prev, 1), n)); // clamp to [1..n]
   }
 
   function handleAdultsChange(nextAdults: number) {
-    // clamp adults to [0..guests]
-    const clamped = Math.max(0, Math.min(nextAdults, guests));
+    const clamped = Math.max(1, Math.min(nextAdults, guests));
     setAdults(clamped);
   }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    setStatus("");
+    if (submitting) return;
+
+    setStatus(null);
     setPhoneError("");
 
     const name = fullName.trim();
     const cleanedPhone = normalizePhone(phone);
 
     if (!name) {
-      setStatus("Please enter your full name.");
+      setStatus({ type: "err", text: "Please enter your full name." });
       return;
     }
 
-    if (!isValidPhone(cleanedPhone)) {
-      setPhoneError("Please enter a valid Malaysian phone number, example 0123456789.");
+    if (!isValidMYPhoneE164(cleanedPhone)) {
+      setPhoneError("Please enter a valid Malaysian number (e.g. 0123456789 or +60123456789).");
       return;
     }
 
@@ -73,7 +88,7 @@ export default function RsvpForm({ session }: Props) {
     const safeMessage = trimmedMessage.length > 0 ? trimmedMessage.slice(0, 400) : null;
 
     setSubmitting(true);
-    setStatus("Submitting...");
+    setStatus({ type: "info", text: "Submitting..." });
 
     const { error } = await supabase.from("rsvps").insert({
       full_name: name,
@@ -86,30 +101,24 @@ export default function RsvpForm({ session }: Props) {
       show_message: false,
     });
 
-
     setSubmitting(false);
 
     if (error) {
-      setStatus(`❌ Something went wrong. ${error.message}`);
+      setStatus({ type: "err", text: `Something went wrong: ${error.message}` });
       return;
     }
-
-    setStatus("✅ RSVP submitted. Thank you!");
-    setFullName("");
-    setPhone("");
-    setGuests(1);
-    setAdults(1);
-    setMessage("");
+    router.push(`/rsvp/success?name=${encodeURIComponent(name)}`);
   }
 
   return (
-    <form onSubmit={submit} className="mt-6 space-y-5">
+    <form onSubmit={submit} className="mt-8 space-y-5">
       <div>
         <label className="text-sm text-zinc-600">Full Name</label>
         <input
           className="mt-2 w-full rounded-2xl border border-zinc-200 bg-white p-3.5 outline-none focus:border-zinc-400"
           value={fullName}
           onChange={(e) => setFullName(e.target.value)}
+          autoComplete="name"
           required
         />
       </div>
@@ -119,16 +128,16 @@ export default function RsvpForm({ session }: Props) {
         <input
           className={[
             "mt-2 w-full rounded-2xl border bg-white p-3.5 outline-none",
-            phoneError
-              ? "border-red-400 focus:border-red-500"
-              : "border-zinc-200 focus:border-zinc-400",
+            phoneError ? "border-red-400 focus:border-red-500" : "border-zinc-200 focus:border-zinc-400",
           ].join(" ")}
           value={phone}
           onChange={(e) => {
             setPhone(e.target.value);
             setPhoneError("");
           }}
-          placeholder="e.g. 0123456789"
+          placeholder="e.g. 0123456789 or +60123456789"
+          inputMode="tel"
+          autoComplete="tel"
           required
         />
         {phoneError && <p className="mt-2 text-sm text-red-600">{phoneError}</p>}
@@ -204,7 +213,7 @@ export default function RsvpForm({ session }: Props) {
         type="submit"
         disabled={submitting}
         className={[
-          "w-full rounded-2xl p-3.5 text-white",
+          "w-full rounded-2xl p-3.5 text-white transition",
           submitting ? "bg-black/70" : "bg-black hover:opacity-90",
         ].join(" ")}
       >
@@ -212,8 +221,18 @@ export default function RsvpForm({ session }: Props) {
       </button>
 
       {status && (
-        <div className="rounded-2xl border border-zinc-200 bg-[#fbf7f3] p-4 text-sm text-zinc-700">
-          {status}
+        <div
+          className={[
+            "rounded-2xl border p-4 text-sm",
+            status.type === "ok"
+              ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+              : status.type === "err"
+                ? "border-red-200 bg-red-50 text-red-900"
+                : "border-zinc-200 bg-white/70 text-zinc-700",
+          ].join(" ")}
+        >
+          {status.type === "ok" ? "✅ " : status.type === "err" ? "❌ " : "⏳ "}
+          {status.text}
         </div>
       )}
     </form>

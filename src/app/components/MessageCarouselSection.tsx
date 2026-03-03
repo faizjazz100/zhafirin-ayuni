@@ -13,6 +13,14 @@ type Row = {
     show_message: boolean | null;
 };
 
+type Item = {
+    id: string;
+    name: string;
+    message: string;
+    createdAt: string;
+    initials: string;
+};
+
 export default function MessageCarouselSection() {
     const [rows, setRows] = useState<Row[]>([]);
     const [idx, setIdx] = useState(0);
@@ -20,18 +28,22 @@ export default function MessageCarouselSection() {
     const scrollerRef = useRef<HTMLDivElement | null>(null);
     const userInteracting = useRef(false);
 
-    const items = useMemo(() => {
+    const items = useMemo<Item[]>(() => {
         return (rows ?? [])
             .filter((r) => (r.message ?? "").trim().length > 0)
-            .map((r) => ({
-                id: r.id,
-                name: r.full_name?.trim() || "Guest",
-                message: (r.message ?? "").trim(),
-                createdAt: r.created_at,
-            }));
+            .map((r) => {
+                const name = r.full_name?.trim() || "Guest";
+                return {
+                    id: r.id,
+                    name,
+                    message: (r.message ?? "").trim(),
+                    createdAt: r.created_at,
+                    initials: initialsFromName(name),
+                };
+            });
     }, [rows]);
 
-    // Fetch fewer rows = less work
+    // Fetch messages
     useEffect(() => {
         let alive = true;
 
@@ -60,14 +72,18 @@ export default function MessageCarouselSection() {
         };
     }, []);
 
-    // Keep idx synced with scroll position
+    // Sync idx with scroll position
     useEffect(() => {
         const el = scrollerRef.current;
         if (!el) return;
 
         const onScroll = () => {
-            const cardW = el.clientWidth; // each card is 100% width
-            const next = Math.round(el.scrollLeft / Math.max(1, cardW));
+            // card width is 88% on mobile, ~520px on desktop; use first child width
+            const child = el.querySelector<HTMLElement>("[data-card]");
+            const cardW = child?.offsetWidth ?? el.clientWidth;
+            const gap = 16; // matches gap-4
+            const step = cardW + gap;
+            const next = Math.round(el.scrollLeft / Math.max(1, step));
             setIdx((prev) => (prev === next ? prev : next));
         };
 
@@ -75,31 +91,26 @@ export default function MessageCarouselSection() {
         return () => el.removeEventListener("scroll", onScroll as any);
     }, []);
 
-    // Autoplay by scrolling to next card (native smooth)
+    // Autoplay
     useEffect(() => {
         if (items.length <= 1) return;
 
         const t = setInterval(() => {
             if (userInteracting.current) return;
-            const el = scrollerRef.current;
-            if (!el) return;
-
-            const next = (idx + 1) % items.length;
-            el.scrollTo({ left: next * el.clientWidth, behavior: "smooth" });
-        }, 4500);
+            goTo(idx + 1);
+        }, 5200);
 
         return () => clearInterval(t);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [idx, items.length]);
 
-    // Pause autoplay while touching/dragging
+    // Pause autoplay on interaction
     useEffect(() => {
         const el = scrollerRef.current;
         if (!el) return;
 
         const start = () => (userInteracting.current = true);
-        const end = () => {
-            userInteracting.current = false;
-        };
+        const end = () => (userInteracting.current = false);
 
         el.addEventListener("pointerdown", start);
         el.addEventListener("pointerup", end);
@@ -114,14 +125,29 @@ export default function MessageCarouselSection() {
         };
     }, []);
 
+    function goTo(nextIndex: number) {
+        const el = scrollerRef.current;
+        if (!el) return;
+        if (items.length === 0) return;
+
+        const clamped = ((nextIndex % items.length) + items.length) % items.length;
+
+        const child = el.querySelector<HTMLElement>("[data-card]");
+        const cardW = child?.offsetWidth ?? el.clientWidth;
+        const gap = 16; // gap-4
+        const step = cardW + gap;
+
+        el.scrollTo({ left: clamped * step, behavior: "smooth" });
+    }
+
     if (items.length === 0) return null;
 
     return (
-        <section className="mt-8">
-            {/* keep your outer card, but remove extra blur layers */}
-            <div className="rounded-[28px] border border-white/40 bg-white/65 p-6 shadow-[0_20px_60px_rgba(0,0,0,0.08)] backdrop-blur-xl sm:p-10">
+        <section className="mt-10">
+            {/* Outer card: matches your homepage section cards */}
+            <div className="rounded-[28px] border border-white/55 bg-white/65 p-6 shadow-[0_20px_70px_rgba(0,0,0,0.10)] sm:p-10">
                 <div className="text-center">
-                    <p className="text-xs font-semibold uppercase tracking-[0.28em] text-zinc-600">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.34em] text-[#7A0022]/80">
                         Messages
                     </p>
                     <h2 className="mt-2 font-serif text-3xl font-semibold text-zinc-900">
@@ -132,17 +158,36 @@ export default function MessageCarouselSection() {
                     </p>
                 </div>
 
-                <div className="mt-8">
-                    {/* Native fast carousel */}
+                <div className="relative mt-8">
+                    {/* Desktop arrows */}
+                    {items.length > 1 && (
+                        <>
+                            <button
+                                type="button"
+                                onClick={() => goTo(idx - 1)}
+                                className="hidden md:inline-flex absolute -left-3 top-1/2 -translate-y-1/2 z-10 h-11 w-11 items-center justify-center rounded-full border border-black/10 bg-white/80 backdrop-blur hover:bg-white"
+                                aria-label="Previous message"
+                            >
+                                <ChevronLeft />
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => goTo(idx + 1)}
+                                className="hidden md:inline-flex absolute -right-3 top-1/2 -translate-y-1/2 z-10 h-11 w-11 items-center justify-center rounded-full border border-black/10 bg-white/80 backdrop-blur hover:bg-white"
+                                aria-label="Next message"
+                            >
+                                <ChevronRight />
+                            </button>
+                        </>
+                    )}
+
+                    {/* Carousel */}
                     <div
                         ref={scrollerRef}
-                        className="flex w-full snap-x snap-mandatory overflow-x-auto scroll-smooth rounded-[24px] border border-black/10 bg-white/80 shadow-sm"
-                        style={{
-                            WebkitOverflowScrolling: "touch",
-                            scrollbarWidth: "none",
-                        }}
+                        className="flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth pb-2"
+                        style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "none" }}
                     >
-                        {/* hide scrollbar (webkit) */}
                         <style jsx>{`
               div::-webkit-scrollbar {
                 display: none;
@@ -150,13 +195,14 @@ export default function MessageCarouselSection() {
             `}</style>
 
                         {items.map((it) => (
-                            <div
+                            <article
                                 key={it.id}
-                                className="w-full shrink-0 snap-center p-6 sm:p-8"
+                                data-card
+                                className="snap-start shrink-0 w-[88%] sm:w-[70%] md:w-[520px] rounded-[26px] border border-black/10 bg-white/80 p-6 shadow-[0_18px_60px_rgba(0,0,0,0.07)] backdrop-blur"
                             >
-                                <div className="flex items-start gap-3">
-                                    <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-black/10 bg-white">
-                                        <span className="text-sm">✉️</span>
+                                <header className="flex items-start gap-3">
+                                    <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-black/10 bg-[#FBF7F2] text-xs font-semibold tracking-[0.20em] text-[#7A0022]">
+                                        {it.initials}
                                     </div>
 
                                     <div className="min-w-0">
@@ -164,44 +210,99 @@ export default function MessageCarouselSection() {
                                             {it.name}
                                         </p>
                                         <p className="text-xs text-zinc-500">
-                                            {new Date(it.createdAt).toLocaleDateString()}
+                                            {formatDate(it.createdAt)}
                                         </p>
                                     </div>
+                                </header>
+
+                                <div className="mt-5">
+                                    <p className="text-[16px] leading-relaxed text-zinc-800">
+                                        “{trimTo(it.message, 260)}”
+                                    </p>
                                 </div>
-
-                                <p className="mt-5 text-[17px] leading-relaxed text-zinc-800">
-                                    “{trimTo(it.message, 220)}”
-                                </p>
-                            </div>
+                            </article>
                         ))}
                     </div>
 
-                    {/* dots */}
-                    <div className="mt-4 flex items-center justify-center gap-2">
-                        {items.map((it, i) => (
-                            <button
-                                key={it.id}
-                                onClick={() => {
-                                    const el = scrollerRef.current;
-                                    if (!el) return;
-                                    el.scrollTo({ left: i * el.clientWidth, behavior: "smooth" });
-                                }}
-                                className={[
-                                    "h-2 w-2 rounded-full transition",
-                                    i === idx ? "bg-zinc-900/70" : "bg-zinc-900/20 hover:bg-zinc-900/35",
-                                ].join(" ")}
-                                aria-label={`Go to message ${i + 1}`}
-                            />
-                        ))}
-                    </div>
+                    {/* Dots */}
+                    {items.length > 1 && (
+                        <div className="mt-5 flex items-center justify-center gap-2">
+                            {items.map((it, i) => (
+                                <button
+                                    key={it.id}
+                                    onClick={() => goTo(i)}
+                                    className={[
+                                        "h-2.5 rounded-full transition",
+                                        i === idx ? "w-6 bg-[#7A0022]/70" : "w-2.5 bg-zinc-900/15 hover:bg-zinc-900/25",
+                                    ].join(" ")}
+                                    aria-label={`Go to message ${i + 1}`}
+                                />
+                            ))}
+                        </div>
+                    )}
                 </div>
             </div>
         </section>
     );
 }
 
+/* ---------------- helpers ---------------- */
+
 function trimTo(text: string, max: number) {
     const t = (text ?? "").trim();
     if (t.length <= max) return t;
     return t.slice(0, max).trim() + "...";
+}
+
+function formatDate(iso: string) {
+    // Safer formatting without locale surprises
+    try {
+        const d = new Date(iso);
+        if (Number.isNaN(d.getTime())) return "";
+        return d.toLocaleDateString(undefined, {
+            year: "numeric",
+            month: "short",
+            day: "2-digit",
+        });
+    } catch {
+        return "";
+    }
+}
+
+function initialsFromName(name: string) {
+    const parts = name
+        .split(" ")
+        .map((p) => p.trim())
+        .filter(Boolean);
+    const a = parts[0]?.[0]?.toUpperCase() ?? "G";
+    const b = parts.length > 1 ? parts[parts.length - 1]?.[0]?.toUpperCase() : "";
+    return (a + b).slice(0, 2);
+}
+
+function ChevronLeft() {
+    return (
+        <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none">
+            <path
+                d="M15 18l-6-6 6-6"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+        </svg>
+    );
+}
+
+function ChevronRight() {
+    return (
+        <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none">
+            <path
+                d="M9 6l6 6-6 6"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+        </svg>
+    );
 }

@@ -1,27 +1,34 @@
-import "./globals.css";
 import type { Metadata } from "next";
-import { Playfair_Display, Inter } from "next/font/google";
-import SiteHeader from "@/src/app/components/SiteHeader";
-import "./fontawesome";
-import { Analytics } from "@vercel/analytics/next"
-import AppBackground from "@/src/app/components/AppBackground";
+import "./globals.css";
 
-
-const playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-serif" });
-const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
+import Navbar from "@/src/app/components/Navbar";
 
 export const metadata: Metadata = {
-  title: "Zhafirin & Ayuni",
+  title: "Ayuni & Zhafirin",
+  description: "Wedding invitation",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+function monogramFromCouple(couple: string) {
+  const parts = couple.split("&").map((s) => s.trim()).filter(Boolean);
+  const a = parts[0]?.[0]?.toUpperCase() ?? "";
+  const b = parts[1]?.[0]?.toUpperCase() ?? "";
+  return a && b ? `${a} & ${b}` : couple;
+}
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  // Put your global event name here:
+  const COUPLE = "Ayuni & Zhafirin";
+  const monogram = monogramFromCouple(COUPLE);
+
   return (
-    <html lang="en" className={`${playfair.variable} ${inter.variable}`}>
-      <body className="font-sans bg-[#fbf7f3] text-zinc-900">
-        <AppBackground />
-        <SiteHeader />
+    <html lang="en">
+      <body className="bg-[#FBF7F2] text-zinc-900">
+        <Navbar monogram={monogram} rsvpHref="/rsvp" />
         {children}
-        <Analytics />
       </body>
     </html>
   );

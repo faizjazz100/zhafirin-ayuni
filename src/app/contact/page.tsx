@@ -2,10 +2,9 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import PageShell from "@/src/app/components/PageShell";
+import PageContainer from "@/src/app/components/PageContainer";
 
 export default function ContactPage() {
-    // ✅ EDIT THESE
     const COUPLE = "Zhafirin & Ayuni";
 
     const CONTACTS = [
@@ -16,43 +15,48 @@ export default function ContactPage() {
     ];
 
     return (
-        <main className="min-h-screen text-zinc-800">
-            {/* soft glow background */}
+        <main className="min-h-screen bg-[#FBF7F2] text-zinc-800">
+            {/* Soft background (matches home) */}
             <div className="pointer-events-none fixed inset-0 -z-10">
-                <div className="absolute -left-32 -top-28 h-96 w-96 rounded-full bg-black/5 blur-3xl" />
-                <div className="absolute -right-24 top-20 h-80 w-80 rounded-full bg-black/5 blur-3xl" />
+                <div className="absolute inset-0 bg-[radial-gradient(1200px_800px_at_10%_10%,rgba(122,0,34,0.10),transparent_60%),radial-gradient(900px_700px_at_90%_20%,rgba(176,16,62,0.08),transparent_55%),radial-gradient(900px_700px_at_50%_100%,rgba(0,0,0,0.06),transparent_60%)]" />
+                <div className="absolute inset-0 bg-gradient-to-b from-white/70 via-[#FBF7F2]/55 to-white/80" />
             </div>
 
-            {/* Content */}
-            <PageShell>
+            <PageContainer floral>
                 <motion.div
-                    initial={{ opacity: 0, y: 12 }}
+                    initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.45 }}
+                    transition={{ duration: 0.45, ease: "easeOut" }}
+                    className="rounded-[28px] border border-white/55 bg-white/65 p-6 shadow-[0_20px_70px_rgba(0,0,0,0.10)] sm:p-10"
                 >
-                    <p className="text-xs uppercase tracking-[0.28em] text-zinc-500">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.34em] text-[#7A0022]/80">
                         Contact
                     </p>
-                    <h1 className="mt-3 font-serif text-4xl font-semibold sm:text-5xl">
+
+                    <h1 className="mt-2 font-serif text-4xl font-semibold text-zinc-900 sm:text-5xl">
                         Get in Touch
                     </h1>
+
                     <p className="mt-3 text-sm text-zinc-600">
                         If you have any questions about the event, location, or RSVP, feel free to contact us.
                     </p>
 
+                    {/* Contact cards */}
                     <div className="mt-8 grid gap-4 sm:grid-cols-2">
                         {CONTACTS.map((c) => (
                             <div
                                 key={c.name}
-                                className="rounded-3xl border border-zinc-200 bg-[#fbf7f3] p-6"
+                                className="rounded-3xl border border-black/10 bg-white/75 p-6 shadow-[0_10px_30px_rgba(0,0,0,0.06)]"
                             >
-                                <p className="text-sm text-zinc-600">{c.name}</p>
-                                <p className="mt-1 text-lg font-semibold text-zinc-900">
+                                <p className="text-xs font-semibold uppercase tracking-[0.30em] text-[#7A0022]/80">
+                                    {c.name}
+                                </p>
+
+                                <p className="mt-2 text-lg font-semibold text-zinc-900">
                                     {c.phoneDisplay}
                                 </p>
 
                                 <div className="mt-4 flex gap-3">
-                                    {/* Call */}
                                     <a
                                         href={`tel:+${c.phoneE164}`}
                                         className="inline-flex flex-1 items-center justify-center rounded-2xl bg-black px-4 py-2 text-sm text-white hover:opacity-90"
@@ -60,12 +64,11 @@ export default function ContactPage() {
                                         Call
                                     </a>
 
-                                    {/* WhatsApp */}
                                     <a
                                         href={`https://wa.me/${c.phoneE164}`}
                                         target="_blank"
                                         rel="noreferrer"
-                                        className="inline-flex flex-1 items-center justify-center rounded-2xl border border-zinc-300 bg-white px-4 py-2 text-sm hover:bg-zinc-50"
+                                        className="inline-flex flex-1 items-center justify-center rounded-2xl border border-black/10 bg-white/90 px-4 py-2 text-sm text-zinc-900 hover:bg-white"
                                     >
                                         WhatsApp
                                     </a>
@@ -74,41 +77,38 @@ export default function ContactPage() {
                         ))}
                     </div>
 
-                    <div className="mt-8 rounded-3xl border border-zinc-200 bg-[#fbf7f3] p-6 text-sm text-zinc-700">
-                        <p className="font-medium">Common questions</p>
-                        <ul className="mt-3 list-disc space-y-2 pl-5 text-zinc-700">
+                    {/* FAQ box */}
+                    <div className="mt-8 rounded-[28px] border border-black/10 bg-white/75 p-6">
+                        <p className="text-sm font-semibold text-zinc-900">Common questions</p>
+                        <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-zinc-700">
                             <li>If you can’t attend, please still RSVP so we can update the list.</li>
-                            <li>For directions / parking, check the Location section on the Home page.</li>
+                            <li>For directions / parking, check the Venue section on the Home page.</li>
                             <li>If you received a private invite link, please use that link to RSVP.</li>
                         </ul>
                     </div>
 
+                    {/* Actions */}
                     <div className="mt-10 flex flex-col gap-3 sm:flex-row">
                         <Link
                             href="/"
-                            className="inline-flex items-center justify-center rounded-2xl border border-zinc-300 bg-white px-5 py-3 text-sm hover:bg-zinc-50"
+                            className="inline-flex items-center justify-center rounded-2xl border border-black/10 bg-white/85 px-5 py-3 text-sm text-zinc-900 hover:bg-white"
                         >
                             Back to Home
                         </Link>
+
                         <Link
                             href="/rsvp"
-                            className="inline-flex items-center justify-center rounded-2xl bg-black px-5 py-3 text-sm text-white hover:opacity-90"
+                            className="inline-flex items-center justify-center rounded-2xl bg-[#7A0022] px-5 py-3 text-sm font-medium text-white shadow-[0_12px_26px_rgba(122,0,34,0.18)] hover:bg-[#64001C]"
                         >
                             RSVP
                         </Link>
                     </div>
 
-                    <p className="mt-8 text-center text-sm text-zinc-500">
+                    <p className="mt-10 text-center text-sm text-zinc-600">
                         © {new Date().getFullYear()} {COUPLE}
                     </p>
                 </motion.div>
-            </PageShell>
-
-            <style jsx global>{`
-        .font-serif {
-          font-family: var(--font-serif), ui-serif, Georgia, serif;
-        }
-      `}</style>
+            </PageContainer>
         </main>
     );
 }
