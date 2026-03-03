@@ -10,8 +10,8 @@ import MessageCarouselSection from "./components/MessageCarouselSection";
 export default function Page() {
   // ---- DATA (edit freely) ----
   const DATE_TOP = "May 2, 2026";
-  const HASHTAG = "#YUNIZHAF";
-  const COUPLE = "Ayuni & Zhafirin";
+  const HASHTAG = "#ZHAFYUNI";
+  const COUPLE = "Zhafirin & Ayuni";
   const SUBLINE = "2.5.2026 | Luminare Hall, Petaling Jaya";
   const RSVP_DEADLINE = "28 March 2026";
 
