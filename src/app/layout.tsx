@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import "./globals.css";
 
@@ -17,17 +18,21 @@ function monogramFromCouple(couple: string) {
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
-  // Put your global event name here:
+}) {
   const COUPLE = "Ayuni & Zhafirin";
   const monogram = monogramFromCouple(COUPLE);
 
   return (
     <html lang="en">
       <body className="bg-[#FBF7F2] text-zinc-900">
-        <Navbar monogram={monogram} rsvpHref="/rsvp" />
+
+        {/* ✅ FIX HERE */}
+        <Suspense fallback={null}>
+          <Navbar monogram={monogram} rsvpHref="/rsvp" />
+        </Suspense>
+
         {children}
       </body>
     </html>

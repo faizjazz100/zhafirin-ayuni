@@ -7,7 +7,7 @@ export default function RSVPPage() {
             <div className="mx-auto max-w-3xl px-5 pb-16 pt-10 sm:px-6 sm:pt-14">
                 <div className="rounded-[28px] border border-white/60 bg-white/70 p-6 shadow-[0_20px_70px_rgba(0,0,0,0.08)] backdrop-blur sm:p-10">
 
-                    <p className="text-xs uppercase tracking-[0.28em] text-zinc-500">
+                    <p className="text-xs text-[#7A0022]/80 texuppercase tracking-[0.28em] ">
                         RSVP
                     </p>
 

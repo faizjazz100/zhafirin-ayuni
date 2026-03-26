@@ -26,8 +26,8 @@ const SESSION_OPTIONS: Session[] = ["Session 1", "Session 2", "Session 3"];
 
 const SESSION_TIME: Record<Session, string> = {
   "Session 1": "3:00 PM",
-  "Session 2": "5:00 PM",
-  "Session 3": "7:00 PM",
+  "Session 2": "4:30 PM",
+  "Session 3": "5:30 PM",
 };
 function normalizePhone(input: string) {
   let cleaned = input.trim().replace(/[^\d+]/g, "");
@@ -58,7 +58,7 @@ export default function RsvpForm() {
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [selectedSession, setSelectedSession] = useState<Session>("Session 1");
-  const [guestOf, setGuestOf] = useState<GuestOf>("Bride");
+  const [guestOf, setGuestOf] = useState<GuestOf>("Groom");
 
   const [guests, setGuests] = useState(1);
   const [adults, setAdults] = useState(1);
@@ -251,6 +251,18 @@ export default function RsvpForm() {
         {phoneError && <p className="mt-2 text-sm text-red-600">{phoneError}</p>}
       </div>
 
+      <div>
+        <label className="text-sm text-zinc-600">Guest of</label>
+        <select
+          className="mt-2 w-full rounded-2xl border border-zinc-200 bg-white px-3 py-3 text-sm"
+          value={guestOf}
+          onChange={(e) => setGuestOf(e.target.value as GuestOf)}
+        >
+          <option value="Groom">Groom (Zhafirin)</option>
+          <option value="Bride">Bride (Ayuni)</option>
+        </select>
+      </div>
+
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div>
           <label className="text-sm text-zinc-600">Session</label>
@@ -292,16 +304,12 @@ export default function RsvpForm() {
           )}
         </div>
 
-        <div>
-          <label className="text-sm text-zinc-600">Guest of</label>
-          <select
-            className="mt-2 w-full rounded-2xl border border-zinc-200 bg-white px-3 py-3 text-sm"
-            value={guestOf}
-            onChange={(e) => setGuestOf(e.target.value as GuestOf)}
-          >
-            <option value="Bride">Bride</option>
-            <option value="Groom">Groom</option>
-          </select>
+        <div className="mt-3">
+          <p className="text-sm text-zinc-500">Selected Time</p>
+
+          <div className="mt-1 inline-flex items-center rounded-full bg-[#7A0022]/10 px-4 py-1.5 text-sm font-medium text-[#7A0022]">
+            {SESSION_TIME[selectedSession]}
+          </div>
         </div>
       </div>
 
