@@ -23,7 +23,7 @@ export default async function RSVPPage() {
                     </h1>
 
                     <p className="mt-2 text-sm font-semibold text-zinc-700">
-                        10:00AM – 12:00PM | 18.4.2026, Saturday | Luminare Hall, Petaling Jaya
+                        3:00PM – 8:00PM | 2.5.2026, Saturday | Hacienda A-Park, Puchong
                     </p>
 
                     <p className="mt-3 text-sm text-zinc-600">

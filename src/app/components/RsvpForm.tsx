@@ -1,62 +1,158 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 
+export type Session = "Session 1" | "Session 2" | "Session 3";
+type GuestOf = "Bride" | "Groom";
 
-export type Session = "Public" | "Private";
+type SessionLimitRow = {
+  session_name: Session;
+  guest_limit: number;
+};
 
+type RsvpUsageRow = {
+  session: Session | null;
+  guests: number | null;
+};
+
+type SessionAvailability = Record<
+  Session,
+  { remaining: number; limit: number; used: number }
+>;
+
+const SESSION_OPTIONS: Session[] = ["Session 1", "Session 2", "Session 3"];
+
+const SESSION_TIME: Record<Session, string> = {
+  "Session 1": "3:00 PM",
+  "Session 2": "5:00 PM",
+  "Session 3": "7:00 PM",
+};
 function normalizePhone(input: string) {
-  // Keep + for international, remove spaces/dashes
-  const cleaned = input.trim().replace(/[^\d+]/g, "");
+  let cleaned = input.trim().replace(/[^\d+]/g, "");
 
-  // Convert common Malaysian formats to +60XXXXXXXXXX
-  // Examples:
-  // 0123456789 -> +60123456789
-  // 60123456789 -> +60123456789
-  // +60123456789 -> +60123456789
-  if (cleaned.startsWith("+60")) return cleaned;
-  if (cleaned.startsWith("60")) return `+${cleaned}`;
-  if (cleaned.startsWith("0")) return `+60${cleaned.slice(1)}`;
+  if (cleaned.includes("+")) {
+    cleaned = "+" + cleaned.replace(/\+/g, "");
+  }
+
+  // Malaysian local format support
+  if (/^01\d{8,9}$/.test(cleaned)) {
+    return `+60${cleaned.slice(1)}`;
+  }
+
+  if (/^601\d{8,9}$/.test(cleaned)) {
+    return `+${cleaned}`;
+  }
+
   return cleaned;
 }
 
-function isValidMYPhoneE164(phone: string) {
-  // +601 followed by 8-9 digits (mobile formats)
-  return /^\+601\d{8,9}$/.test(phone);
+function isValidInternationalPhone(phone: string) {
+  return /^\+[1-9]\d{7,14}$/.test(phone);
 }
 
-type Props = {
-  session: Session;
-};
+export default function RsvpForm() {
+  const router = useRouter();
 
-export default function RsvpForm({ session }: Props) {
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
-  const router = useRouter();
+  const [selectedSession, setSelectedSession] = useState<Session>("Session 1");
+  const [guestOf, setGuestOf] = useState<GuestOf>("Bride");
 
   const [guests, setGuests] = useState(1);
   const [adults, setAdults] = useState(1);
   const kids = useMemo(() => Math.max(0, guests - adults), [guests, adults]);
 
   const [message, setMessage] = useState("");
-
   const [status, setStatus] = useState<null | { type: "ok" | "err" | "info"; text: string }>(null);
   const [phoneError, setPhoneError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  const [sessionAvailability, setSessionAvailability] = useState<SessionAvailability>({
+    "Session 1": { remaining: 0, limit: 0, used: 0 },
+    "Session 2": { remaining: 0, limit: 0, used: 0 },
+    "Session 3": { remaining: 0, limit: 0, used: 0 },
+  });
+  const [loadingSessions, setLoadingSessions] = useState(true);
+
   const guestOptions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
-  // Adults: enforce min 1 adult (typical RSVP assumption)
   const adultOptions = useMemo(
     () => Array.from({ length: guests }, (_, i) => i + 1),
     [guests]
   );
 
+  async function loadSessionAvailability() {
+    setLoadingSessions(true);
+
+    const [{ data: limits, error: limitsError }, { data: rsvps, error: rsvpsError }] =
+      await Promise.all([
+        supabase.from("session_limits").select("session_name, guest_limit"),
+        supabase.from("rsvps").select("session, guests"),
+      ]);
+
+    if (limitsError || rsvpsError) {
+      setLoadingSessions(false);
+      return;
+    }
+
+    const usageMap: Record<Session, number> = {
+      "Session 1": 0,
+      "Session 2": 0,
+      "Session 3": 0,
+    };
+
+    ((rsvps ?? []) as RsvpUsageRow[]).forEach((row) => {
+      if (!row.session) return;
+      usageMap[row.session] += Number(row.guests) || 0;
+    });
+
+    const nextAvailability: SessionAvailability = {
+      "Session 1": { remaining: 0, limit: 0, used: 0 },
+      "Session 2": { remaining: 0, limit: 0, used: 0 },
+      "Session 3": { remaining: 0, limit: 0, used: 0 },
+    };
+
+    ((limits ?? []) as SessionLimitRow[]).forEach((row) => {
+      const used = usageMap[row.session_name] || 0;
+      const limit = Number(row.guest_limit) || 0;
+
+      nextAvailability[row.session_name] = {
+        used,
+        limit,
+        remaining: Math.max(0, limit - used),
+      };
+    });
+
+    setSessionAvailability(nextAvailability);
+    setLoadingSessions(false);
+  }
+
+  useEffect(() => {
+    async function init() {
+      await loadSessionAvailability();
+    }
+    init();
+  }, []);
+
+  function findNextAvailableSession(guestCount: number) {
+    return SESSION_OPTIONS.find(
+      (session) => (sessionAvailability[session]?.remaining ?? 0) >= guestCount
+    );
+  }
+
   function handleGuestsClick(n: number) {
     setGuests(n);
-    setAdults((prev) => Math.min(Math.max(prev, 1), n)); // clamp to [1..n]
+    setAdults((prev) => Math.min(Math.max(prev, 1), n));
+
+    const currentRemaining = sessionAvailability[selectedSession]?.remaining ?? 0;
+    if (currentRemaining < n) {
+      const nextAvailable = findNextAvailableSession(n);
+      if (nextAvailable) {
+        setSelectedSession(nextAvailable);
+      }
+    }
   }
 
   function handleAdultsChange(nextAdults: number) {
@@ -79,8 +175,17 @@ export default function RsvpForm({ session }: Props) {
       return;
     }
 
-    if (!isValidMYPhoneE164(cleanedPhone)) {
-      setPhoneError("Please enter a valid Malaysian number (e.g. 0123456789 or +60123456789).");
+    if (!isValidInternationalPhone(cleanedPhone)) {
+      setPhoneError("Please enter a valid phone number with country code, e.g. +60123456789.");
+      return;
+    }
+
+    const remaining = sessionAvailability[selectedSession]?.remaining ?? 0;
+    if (remaining < guests) {
+      setStatus({
+        type: "err",
+        text: `Sorry, ${selectedSession} does not have enough remaining slots.`,
+      });
       return;
     }
 
@@ -96,17 +201,20 @@ export default function RsvpForm({ session }: Props) {
       guests,
       adults,
       kids,
-      session,
+      session: selectedSession,
+      guest_of: guestOf,
       message: safeMessage,
       show_message: false,
     });
 
-    setSubmitting(false);
-
     if (error) {
+      setSubmitting(false);
       setStatus({ type: "err", text: `Something went wrong: ${error.message}` });
       return;
     }
+
+    await loadSessionAvailability();
+    setSubmitting(false);
     router.push(`/rsvp/success?name=${encodeURIComponent(name)}`);
   }
 
@@ -135,12 +243,66 @@ export default function RsvpForm({ session }: Props) {
             setPhone(e.target.value);
             setPhoneError("");
           }}
-          placeholder="e.g. 0123456789 or +60123456789"
+          placeholder="e.g. 0123456789, +60123456789, +6591234567"
           inputMode="tel"
           autoComplete="tel"
           required
         />
         {phoneError && <p className="mt-2 text-sm text-red-600">{phoneError}</p>}
+      </div>
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div>
+          <label className="text-sm text-zinc-600">Session</label>
+          <select
+            className="mt-2 w-full rounded-2xl border border-zinc-200 bg-white px-3 py-3 text-sm disabled:bg-zinc-100"
+            value={selectedSession}
+            onChange={(e) => setSelectedSession(e.target.value as Session)}
+            disabled={loadingSessions}
+          >
+            {SESSION_OPTIONS.map((session) => {
+              const info = sessionAvailability[session];
+              const remaining = info?.remaining ?? 0;
+              const disabled = remaining < guests;
+
+              return (
+                <option key={session} value={session} disabled={disabled}>
+                  {session} ({SESSION_TIME[session]}){" "}
+                  {loadingSessions
+                    ? ""
+                    : disabled
+                      ? "- Full"
+                      : `- ${remaining} left`}
+                </option>
+              );
+            })}
+          </select>
+
+          {!loadingSessions && (
+            <p className="mt-2 text-xs text-zinc-500">
+              Choose a session with enough slots for {guests} guest{guests > 1 ? "s" : ""}.
+            </p>
+          )}
+
+          {!loadingSessions && (sessionAvailability[selectedSession]?.remaining ?? 0) < guests && (
+            <p className="mt-2 text-xs text-red-600">
+              This session does not have enough slots for {guests} guest{guests > 1 ? "s" : ""}.
+              Please choose another session.
+            </p>
+          )}
+        </div>
+
+        <div>
+          <label className="text-sm text-zinc-600">Guest of</label>
+          <select
+            className="mt-2 w-full rounded-2xl border border-zinc-200 bg-white px-3 py-3 text-sm"
+            value={guestOf}
+            onChange={(e) => setGuestOf(e.target.value as GuestOf)}
+          >
+            <option value="Bride">Bride</option>
+            <option value="Groom">Groom</option>
+          </select>
+        </div>
       </div>
 
       <div>
@@ -154,7 +316,7 @@ export default function RsvpForm({ session }: Props) {
               className={[
                 "rounded-2xl border px-4 py-3 text-sm transition",
                 guests === n
-                  ? "border-black bg-black text-white"
+                  ? "border-[#7A0022] bg-[#7A0022] text-white"
                   : "border-zinc-200 bg-white text-zinc-800 hover:bg-zinc-50",
               ].join(" ")}
             >
@@ -190,10 +352,6 @@ export default function RsvpForm({ session }: Props) {
         </div>
       </div>
 
-      <p className="text-sm text-zinc-600">
-        Total {guests} = Adults {adults} + Kids {kids}
-      </p>
-
       <div>
         <label className="block text-sm font-medium text-zinc-700">
           Message or wish (optional)
@@ -211,13 +369,13 @@ export default function RsvpForm({ session }: Props) {
 
       <button
         type="submit"
-        disabled={submitting}
+        disabled={submitting || loadingSessions}
         className={[
           "w-full rounded-2xl p-3.5 text-white transition",
-          submitting ? "bg-black/70" : "bg-black hover:opacity-90",
+          submitting || loadingSessions ? "bg-[#7A0022]" : "bg-[#7A0022] hover:opacity-90",
         ].join(" ")}
       >
-        {submitting ? "Submitting..." : "Submit RSVP"}
+        {submitting ? "Submitting..." : loadingSessions ? "Loading sessions..." : "Submit RSVP"}
       </button>
 
       {status && (

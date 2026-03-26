@@ -4,8 +4,10 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 
-type Session = "Public" | "Private";
-type Filter = "All" | Session;
+type Session = "Session 1" | "Session 2" | "Session 3";
+type GuestOf = "Bride" | "Groom";
+type SessionFilter = "All" | Session;
+type GuestOfFilter = "All" | GuestOf;
 type Sort = "newest" | "oldest" | "name_az";
 
 export const dynamic = "force-dynamic";
@@ -18,17 +20,18 @@ type RsvpRow = {
     adults: number | null;
     kids: number | null;
     session: Session | null;
+    guest_of: GuestOf | null;
     created_at: string;
 };
 
 export default function AdminPage() {
     const [rows, setRows] = useState<RsvpRow[]>([]);
     const [loading, setLoading] = useState(true);
-    const [filter, setFilter] = useState<Filter>("All");
+    const [sessionFilter, setSessionFilter] = useState<SessionFilter>("All");
+    const [guestOfFilter, setGuestOfFilter] = useState<GuestOfFilter>("All");
     const [sort, setSort] = useState<Sort>("newest");
-    const [error, setError] = useState<string>("");
+    const [error, setError] = useState("");
 
-    // delete UX
     const [deleteId, setDeleteId] = useState<string | null>(null);
     const [deletingIds, setDeletingIds] = useState<Record<string, boolean>>({});
 
@@ -38,9 +41,10 @@ export default function AdminPage() {
 
         let q = supabase
             .from("rsvps")
-            .select("id, full_name, phone, guests, adults, kids, session, created_at");
+            .select("id, full_name, phone, guests, adults, kids, session, guest_of, created_at");
 
-        if (filter !== "All") q = q.eq("session", filter);
+        if (sessionFilter !== "All") q = q.eq("session", sessionFilter);
+        if (guestOfFilter !== "All") q = q.eq("guest_of", guestOfFilter);
 
         if (sort === "newest") q = q.order("created_at", { ascending: false });
         if (sort === "oldest") q = q.order("created_at", { ascending: true });
@@ -61,18 +65,45 @@ export default function AdminPage() {
     useEffect(() => {
         load();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [filter, sort]);
+    }, [sessionFilter, guestOfFilter, sort]);
 
     const totals = useMemo(() => {
         const submissions = rows.length;
         const totalGuests = rows.reduce((sum, r) => sum + (Number(r.guests) || 0), 0);
         const totalAdults = rows.reduce((sum, r) => sum + (Number(r.adults) || 0), 0);
         const totalKids = rows.reduce((sum, r) => sum + (Number(r.kids) || 0), 0);
-        return { submissions, totalGuests, totalAdults, totalKids };
+
+        const session1 = rows.filter((r) => r.session === "Session 1").length;
+        const session2 = rows.filter((r) => r.session === "Session 2").length;
+        const session3 = rows.filter((r) => r.session === "Session 3").length;
+
+        const bride = rows.filter((r) => r.guest_of === "Bride").length;
+        const groom = rows.filter((r) => r.guest_of === "Groom").length;
+
+        return {
+            submissions,
+            totalGuests,
+            totalAdults,
+            totalKids,
+            session1,
+            session2,
+            session3,
+            bride,
+            groom,
+        };
     }, [rows]);
 
     function exportCSV() {
-        const headers = ["Full Name", "Phone", "Guests", "Adults", "Kids", "Session", "Submitted At"];
+        const headers = [
+            "Full Name",
+            "Phone",
+            "Guests",
+            "Adults",
+            "Kids",
+            "Session",
+            "Guest Of",
+            "Submitted At",
+        ];
 
         const lines = rows.map((r) => [
             r.full_name ?? "",
@@ -81,17 +112,22 @@ export default function AdminPage() {
             String(r.adults ?? 0),
             String(r.kids ?? 0),
             r.session ?? "",
+            r.guest_of ?? "",
             new Date(r.created_at).toLocaleString(),
         ]);
 
-        const csv = [headers, ...lines].map((row) => row.map(csvEscape).join(",")).join("\n");
+        const csv = [headers, ...lines]
+            .map((row) => row.map(csvEscape).join(","))
+            .join("\n");
 
         const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
         const url = URL.createObjectURL(blob);
 
         const a = document.createElement("a");
         a.href = url;
-        a.download = `rsvps_${filter.toLowerCase()}_${new Date().toISOString().slice(0, 10)}.csv`;
+        a.download = `rsvps_${sessionFilter.toLowerCase().replace(/\s+/g, "_")}_${guestOfFilter
+            .toLowerCase()
+            .replace(/\s+/g, "_")}_${new Date().toISOString().slice(0, 10)}.csv`;
         document.body.appendChild(a);
         a.click();
         a.remove();
@@ -102,7 +138,6 @@ export default function AdminPage() {
         setDeletingIds((m) => ({ ...m, [id]: true }));
         setError("");
 
-        // optimistic remove
         const prev = rows;
         setRows((r) => r.filter((x) => x.id !== id));
         setDeleteId(null);
@@ -110,9 +145,11 @@ export default function AdminPage() {
         const { error } = await supabase.from("rsvps").delete().eq("id", id);
 
         if (error) {
-            // rollback if failed
+            console.log("DELETE ERROR:", error);
             setRows(prev);
             setError(`Delete failed: ${error.message}`);
+        } else {
+            await load();
         }
 
         setDeletingIds((m) => {
@@ -124,15 +161,14 @@ export default function AdminPage() {
 
     return (
         <main className="min-h-screen bg-[#FBF7F2] text-zinc-800">
-            {/* subtle admin background like site */}
             <div className="pointer-events-none fixed inset-0 -z-10">
                 <div className="absolute inset-0 bg-[radial-gradient(1200px_800px_at_10%_10%,rgba(122,0,34,0.08),transparent_60%),radial-gradient(900px_700px_at_90%_20%,rgba(0,0,0,0.05),transparent_55%)]" />
                 <div className="absolute inset-0 bg-gradient-to-b from-white/70 via-[#FBF7F2]/55 to-white/80" />
             </div>
 
-            <div className="mx-auto max-w-6xl px-5 pb-14 pt-10 sm:px-6 sm:pt-14">
+            <div className="mx-auto max-w-7xl px-5 pb-14 pt-10 sm:px-6 sm:pt-14">
                 <div className="rounded-[28px] border border-white/55 bg-white/65 p-6 shadow-[0_20px_70px_rgba(0,0,0,0.10)] sm:p-10">
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                    <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
                         <div>
                             <p className="text-[11px] font-semibold uppercase tracking-[0.34em] text-[#7A0022]/80">
                                 Admin
@@ -141,26 +177,43 @@ export default function AdminPage() {
                                 RSVP Dashboard
                             </h1>
                             <p className="mt-2 text-sm text-zinc-600">
-                                View submissions, filter by session, export, and manage entries.
+                                View submissions, filter by session and side, export, and manage entries.
                             </p>
                         </div>
 
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
                             <Link
                                 href="/admin/messages"
-                                className="inline-flex items-center justify-center rounded-full border border-black/10 bg-white/85 px-5 py-3 text-sm text-zinc-900 hover:bg-white"
+                                className="inline-flex items-center justify-center rounded-full bg-[#7A0022] px-5 py-3 text-sm font-medium text-white shadow-sm hover:bg-[#64001C] transition"
                             >
                                 Manage Messages
                             </Link>
 
+                            <Link
+                                href="/admin/sessions"
+                                className="inline-flex items-center justify-center rounded-full bg-[#7A0022] px-5 py-3 text-sm font-medium text-white shadow-sm hover:bg-[#64001C] transition"
+                            >
+                                Manage Sessions
+                            </Link>
                             <select
-                                value={filter}
-                                onChange={(e) => setFilter(e.target.value as Filter)}
+                                value={sessionFilter}
+                                onChange={(e) => setSessionFilter(e.target.value as SessionFilter)}
                                 className="rounded-full border border-black/10 bg-white/85 px-5 py-3 text-sm text-zinc-900 hover:bg-white"
                             >
                                 <option value="All">All Sessions</option>
-                                <option value="Public">Public Only</option>
-                                <option value="Private">Private Only</option>
+                                <option value="Session 1">Session 1</option>
+                                <option value="Session 2">Session 2</option>
+                                <option value="Session 3">Session 3</option>
+                            </select>
+
+                            <select
+                                value={guestOfFilter}
+                                onChange={(e) => setGuestOfFilter(e.target.value as GuestOfFilter)}
+                                className="rounded-full border border-black/10 bg-white/85 px-5 py-3 text-sm text-zinc-900 hover:bg-white"
+                            >
+                                <option value="All">Bride + Groom</option>
+                                <option value="Bride">Bride</option>
+                                <option value="Groom">Groom</option>
                             </select>
 
                             <select
@@ -175,7 +228,7 @@ export default function AdminPage() {
 
                             <button
                                 onClick={exportCSV}
-                                className="rounded-full bg-[#7A0022] px-5 py-3 text-sm font-medium text-white shadow-[0_12px_26px_rgba(122,0,34,0.18)] hover:bg-[#64001C] disabled:opacity-50"
+                                className="rounded-2xl bg-black px-4 py-3 text-sm text-white hover:opacity-90 disabled:opacity-50"
                                 disabled={rows.length === 0}
                             >
                                 Export CSV
@@ -190,25 +243,27 @@ export default function AdminPage() {
                         </div>
                     </div>
 
-                    {/* Totals */}
-                    <div className="mt-6 grid gap-4 sm:grid-cols-4">
+                    <div className="mt-6 grid gap-4 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-9">
                         <StatCard label="Total submissions" value={totals.submissions} />
                         <StatCard label="Total guests" value={totals.totalGuests} />
                         <StatCard label="Total adults" value={totals.totalAdults} />
                         <StatCard label="Total kids" value={totals.totalKids} />
+                        <StatCard label="Session 1" value={totals.session1} />
+                        <StatCard label="Session 2" value={totals.session2} />
+                        <StatCard label="Session 3" value={totals.session3} />
+                        <StatCard label="Bride side" value={totals.bride} />
+                        <StatCard label="Groom side" value={totals.groom} />
                     </div>
 
-                    {/* Errors */}
                     {error && (
                         <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
                             {error}
                         </div>
                     )}
 
-                    {/* Table */}
                     <div className="mt-6 overflow-hidden rounded-[28px] border border-black/10 bg-white/80 shadow-[0_10px_30px_rgba(0,0,0,0.06)]">
                         <div className="overflow-x-auto">
-                            <table className="w-full min-w-[1080px] text-left text-sm">
+                            <table className="w-full min-w-[1240px] text-left text-sm">
                                 <thead className="bg-white/60 text-zinc-600">
                                     <tr className="border-b border-black/5">
                                         <th className="px-5 py-4">Name</th>
@@ -217,6 +272,7 @@ export default function AdminPage() {
                                         <th className="px-5 py-4">Adults</th>
                                         <th className="px-5 py-4">Kids</th>
                                         <th className="px-5 py-4">Session</th>
+                                        <th className="px-5 py-4">Guest Of</th>
                                         <th className="px-5 py-4">Submitted</th>
                                         <th className="px-5 py-4 text-right">Actions</th>
                                     </tr>
@@ -225,13 +281,13 @@ export default function AdminPage() {
                                 <tbody>
                                     {loading ? (
                                         <tr>
-                                            <td className="px-5 py-6 text-zinc-600" colSpan={8}>
+                                            <td className="px-5 py-6 text-zinc-600" colSpan={9}>
                                                 Loading...
                                             </td>
                                         </tr>
                                     ) : rows.length === 0 ? (
                                         <tr>
-                                            <td className="px-5 py-6 text-zinc-600" colSpan={8}>
+                                            <td className="px-5 py-6 text-zinc-600" colSpan={9}>
                                                 No submissions found.
                                             </td>
                                         </tr>
@@ -250,6 +306,12 @@ export default function AdminPage() {
                                                 <td className="px-5 py-4">
                                                     <span className="inline-flex rounded-full border border-black/10 bg-white/70 px-3 py-1 text-xs font-medium text-zinc-700">
                                                         {r.session ?? "-"}
+                                                    </span>
+                                                </td>
+
+                                                <td className="px-5 py-4">
+                                                    <span className="inline-flex rounded-full border border-black/10 bg-white/70 px-3 py-1 text-xs font-medium text-zinc-700">
+                                                        {r.guest_of ?? "-"}
                                                     </span>
                                                 </td>
 
@@ -274,7 +336,6 @@ export default function AdminPage() {
                         </div>
                     </div>
 
-                    {/* Delete confirm modal */}
                     {deleteId && (
                         <ConfirmModal
                             title="Delete RSVP?"

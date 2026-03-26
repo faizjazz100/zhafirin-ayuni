@@ -11,12 +11,16 @@ type Item = {
 };
 
 const items: Item[] = [
-    { time: "8:00 AM", title: "Family Arrival" },
-    { time: "8:15 AM", title: "Solemnisation Ceremony" },
-    { time: "10:00 AM", title: "Arrival of Guests" },
-    { time: "10:30 AM", title: "Doa Recital & Opening" },
-    { time: "11:00 AM", title: "Photo Session" },
-    { time: "12:30 PM", title: "End of Ceremony" },
+    { time: "3:00 PM", title: "Arrival of Guests (Session 1)" },
+    { time: "3:30 PM", title: "Groom & Bride Entrance" },
+    { time: "4:00 PM", title: "Photo Session" },
+    { time: "4:30 PM", title: "Arrival of Guests (Session 2)" },
+    { time: "4:30 PM", title: "Makan Beradab" },
+    { time: "5:00 PM", title: "Photo Session" },
+    { time: "5:30 PM", title: "Arrival of Guests (Session 3)" },
+    { time: "5:45 PM", title: "Cake Cutting" },
+    { time: "6:00 PM", title: "Photo Session" },
+    { time: "8:00 PM", title: "End" },
 ];
 
 export default function SchedulePage() {
@@ -58,13 +62,13 @@ export default function SchedulePage() {
                                 transition={{ duration: 0.4, delay: Math.min(i * 0.03, 0.18) }}
                                 className="rounded-3xl border border-black/10 bg-white/75 px-6 py-5 shadow-[0_10px_30px_rgba(0,0,0,0.06)]"
                             >
-                                <div className="flex items-start justify-between gap-4">
-                                    <div className="text-base font-semibold text-zinc-900">
+                                <div className="grid grid-cols-[88px_minmax(0,1fr)] items-start gap-4 sm:grid-cols-[110px_minmax(0,1fr)]">
+                                    <div className="whitespace-nowrap text-base font-semibold text-zinc-900 sm:text-lg">
                                         {it.time}
                                     </div>
 
-                                    <div className="text-right">
-                                        <div className="text-sm font-semibold text-zinc-800">
+                                    <div className="min-w-0 text-right">
+                                        <div className="text-sm font-semibold leading-snug text-zinc-800 sm:text-base">
                                             {it.title}
                                         </div>
 

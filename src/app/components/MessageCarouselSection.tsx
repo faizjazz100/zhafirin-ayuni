@@ -11,6 +11,7 @@ type Row = {
     message: string | null;
     created_at: string;
     show_message: boolean | null;
+    display_order: number | null;
 };
 
 type Item = {
@@ -26,7 +27,6 @@ export default function MessageCarouselSection() {
     const [idx, setIdx] = useState(0);
 
     const scrollerRef = useRef<HTMLDivElement | null>(null);
-    const userInteracting = useRef(false);
 
     const items = useMemo<Item[]>(() => {
         return (rows ?? [])
@@ -43,17 +43,16 @@ export default function MessageCarouselSection() {
             });
     }, [rows]);
 
-    // Fetch messages
     useEffect(() => {
         let alive = true;
 
         (async () => {
             const { data, error } = await supabase
                 .from(TABLE)
-                .select("id, full_name, message, created_at, show_message")
+                .select("id, full_name, message, created_at, show_message, display_order")
                 .eq("show_message", true)
                 .not("message", "is", null)
-                .order("created_at", { ascending: false })
+                .order("display_order", { ascending: true })
                 .limit(12);
 
             if (!alive) return;
@@ -72,79 +71,71 @@ export default function MessageCarouselSection() {
         };
     }, []);
 
-    // Sync idx with scroll position
+    // keep active dot synced with the card closest to center
     useEffect(() => {
         const el = scrollerRef.current;
         if (!el) return;
+
+        let raf = 0;
+
+        const updateActive = () => {
+            const cards = Array.from(el.querySelectorAll<HTMLElement>("[data-card]"));
+            if (!cards.length) return;
+
+            const viewportCenter = el.scrollLeft + el.clientWidth / 2;
+
+            let nearestIndex = 0;
+            let nearestDistance = Infinity;
+
+            cards.forEach((card, i) => {
+                const cardCenter = card.offsetLeft + card.offsetWidth / 2;
+                const distance = Math.abs(viewportCenter - cardCenter);
+
+                if (distance < nearestDistance) {
+                    nearestDistance = distance;
+                    nearestIndex = i;
+                }
+            });
+
+            setIdx((prev) => (prev === nearestIndex ? prev : nearestIndex));
+        };
 
         const onScroll = () => {
-            // card width is 88% on mobile, ~520px on desktop; use first child width
-            const child = el.querySelector<HTMLElement>("[data-card]");
-            const cardW = child?.offsetWidth ?? el.clientWidth;
-            const gap = 16; // matches gap-4
-            const step = cardW + gap;
-            const next = Math.round(el.scrollLeft / Math.max(1, step));
-            setIdx((prev) => (prev === next ? prev : next));
+            cancelAnimationFrame(raf);
+            raf = requestAnimationFrame(updateActive);
         };
 
+        updateActive();
         el.addEventListener("scroll", onScroll, { passive: true });
-        return () => el.removeEventListener("scroll", onScroll as any);
-    }, []);
-
-    // Autoplay
-    useEffect(() => {
-        if (items.length <= 1) return;
-
-        const t = setInterval(() => {
-            if (userInteracting.current) return;
-            goTo(idx + 1);
-        }, 5200);
-
-        return () => clearInterval(t);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [idx, items.length]);
-
-    // Pause autoplay on interaction
-    useEffect(() => {
-        const el = scrollerRef.current;
-        if (!el) return;
-
-        const start = () => (userInteracting.current = true);
-        const end = () => (userInteracting.current = false);
-
-        el.addEventListener("pointerdown", start);
-        el.addEventListener("pointerup", end);
-        el.addEventListener("pointercancel", end);
-        el.addEventListener("mouseleave", end);
 
         return () => {
-            el.removeEventListener("pointerdown", start);
-            el.removeEventListener("pointerup", end);
-            el.removeEventListener("pointercancel", end);
-            el.removeEventListener("mouseleave", end);
+            cancelAnimationFrame(raf);
+            el.removeEventListener("scroll", onScroll);
         };
-    }, []);
+    }, [items.length]);
 
     function goTo(nextIndex: number) {
         const el = scrollerRef.current;
-        if (!el) return;
-        if (items.length === 0) return;
+        if (!el || items.length === 0) return;
 
-        const clamped = ((nextIndex % items.length) + items.length) % items.length;
+        const clamped = Math.max(0, Math.min(nextIndex, items.length - 1));
+        const cards = Array.from(el.querySelectorAll<HTMLElement>("[data-card]"));
+        const target = cards[clamped];
+        if (!target) return;
 
-        const child = el.querySelector<HTMLElement>("[data-card]");
-        const cardW = child?.offsetWidth ?? el.clientWidth;
-        const gap = 16; // gap-4
-        const step = cardW + gap;
+        const left =
+            target.offsetLeft - (el.clientWidth - target.offsetWidth) / 2;
 
-        el.scrollTo({ left: clamped * step, behavior: "smooth" });
+        el.scrollTo({
+            left: Math.max(0, left),
+            behavior: "smooth",
+        });
     }
 
     if (items.length === 0) return null;
 
     return (
         <section className="mt-10">
-            {/* Outer card: matches your homepage section cards */}
             <div className="rounded-[28px] border border-white/55 bg-white/65 p-6 shadow-[0_20px_70px_rgba(0,0,0,0.10)] sm:p-10">
                 <div className="text-center">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.34em] text-[#7A0022]/80">
@@ -159,13 +150,12 @@ export default function MessageCarouselSection() {
                 </div>
 
                 <div className="relative mt-8">
-                    {/* Desktop arrows */}
                     {items.length > 1 && (
                         <>
                             <button
                                 type="button"
                                 onClick={() => goTo(idx - 1)}
-                                className="hidden md:inline-flex absolute -left-3 top-1/2 -translate-y-1/2 z-10 h-11 w-11 items-center justify-center rounded-full border border-black/10 bg-white/80 backdrop-blur hover:bg-white"
+                                className="absolute -left-3 top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-black/10 bg-white/80 backdrop-blur hover:bg-white md:inline-flex"
                                 aria-label="Previous message"
                             >
                                 <ChevronLeft />
@@ -174,7 +164,7 @@ export default function MessageCarouselSection() {
                             <button
                                 type="button"
                                 onClick={() => goTo(idx + 1)}
-                                className="hidden md:inline-flex absolute -right-3 top-1/2 -translate-y-1/2 z-10 h-11 w-11 items-center justify-center rounded-full border border-black/10 bg-white/80 backdrop-blur hover:bg-white"
+                                className="absolute -right-3 top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-black/10 bg-white/80 backdrop-blur hover:bg-white md:inline-flex"
                                 aria-label="Next message"
                             >
                                 <ChevronRight />
@@ -182,11 +172,13 @@ export default function MessageCarouselSection() {
                         </>
                     )}
 
-                    {/* Carousel */}
                     <div
                         ref={scrollerRef}
-                        className="flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth pb-2"
-                        style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "none" }}
+                        className="flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth pb-2 px-[6%] sm:px-[10%] md:px-0"
+                        style={{
+                            WebkitOverflowScrolling: "touch",
+                            scrollbarWidth: "none",
+                        }}
                     >
                         <style jsx>{`
               div::-webkit-scrollbar {
@@ -198,7 +190,7 @@ export default function MessageCarouselSection() {
                             <article
                                 key={it.id}
                                 data-card
-                                className="snap-start shrink-0 w-[88%] sm:w-[70%] md:w-[520px] rounded-[26px] border border-black/10 bg-white/80 p-6 shadow-[0_18px_60px_rgba(0,0,0,0.07)] backdrop-blur"
+                                className="w-[110%] shrink-0 snap-center rounded-[26px] border border-black/10 bg-white/80 p-6 shadow-[0_18px_60px_rgba(0,0,0,0.07)] backdrop-blur sm:w-[70%] md:w-[520px]"
                             >
                                 <header className="flex items-start gap-3">
                                     <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-black/10 bg-[#FBF7F2] text-xs font-semibold tracking-[0.20em] text-[#7A0022]">
@@ -224,7 +216,6 @@ export default function MessageCarouselSection() {
                         ))}
                     </div>
 
-                    {/* Dots */}
                     {items.length > 1 && (
                         <div className="mt-5 flex items-center justify-center gap-2">
                             {items.map((it, i) => (
@@ -233,7 +224,9 @@ export default function MessageCarouselSection() {
                                     onClick={() => goTo(i)}
                                     className={[
                                         "h-2.5 rounded-full transition",
-                                        i === idx ? "w-6 bg-[#7A0022]/70" : "w-2.5 bg-zinc-900/15 hover:bg-zinc-900/25",
+                                        i === idx
+                                            ? "w-6 bg-[#7A0022]/70"
+                                            : "w-2.5 bg-zinc-900/15 hover:bg-zinc-900/25",
                                     ].join(" ")}
                                     aria-label={`Go to message ${i + 1}`}
                                 />
@@ -246,8 +239,6 @@ export default function MessageCarouselSection() {
     );
 }
 
-/* ---------------- helpers ---------------- */
-
 function trimTo(text: string, max: number) {
     const t = (text ?? "").trim();
     if (t.length <= max) return t;
@@ -255,7 +246,6 @@ function trimTo(text: string, max: number) {
 }
 
 function formatDate(iso: string) {
-    // Safer formatting without locale surprises
     try {
         const d = new Date(iso);
         if (Number.isNaN(d.getTime())) return "";
@@ -274,8 +264,11 @@ function initialsFromName(name: string) {
         .split(" ")
         .map((p) => p.trim())
         .filter(Boolean);
+
     const a = parts[0]?.[0]?.toUpperCase() ?? "G";
-    const b = parts.length > 1 ? parts[parts.length - 1]?.[0]?.toUpperCase() : "";
+    const b =
+        parts.length > 1 ? parts[parts.length - 1]?.[0]?.toUpperCase() : "";
+
     return (a + b).slice(0, 2);
 }
 

@@ -7,16 +7,12 @@ import PageContainer from "@/src/app/components/PageContainer";
 export default function VenuePage() {
     const COUPLE = "Zhafirin & Ayuni";
 
-    const VENUE_NAME = "Luminare Hall";
-    const ADDRESS_LINE_1 =
-        "B-G-02, PJ TRADE CENTRE, 8, Jalan PJU 8/8A, Damansara Perdana,";
-    const ADDRESS_LINE_2 = "47820 Petaling Jaya, Selangor";
-
-    const MAP_EMBED_URL =
-        "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3983.7239655671806!2d101.6132164!3d3.1672346!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31cc4f006b35a82b%3A0x1cc4913cab2e37eb!2sLuminare%20Hall!5e0!3m2!1sen!2smy!4v1770207152702!5m2!1sen!2smy";
-
-    const GOOGLE_MAPS_URL = "https://maps.app.goo.gl/dsUEjfK1u7NhSY386";
-    const WAZE_URL = "https://waze.com/ul/hw2860281s&navigate=yes";
+    const VENUE_NAME = "Hacienda A-Park";
+    const ADDRESS_LINE_1 = "3275, Jalan Pulau Meranti, Kampung Pulau Meranti,";
+    const ADDRESS_LINE_2 = "47100 Puchong, Selangor";
+    const MAP_EMBED_URL = "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3984.4791408285764!2d101.62914477584432!3d2.964468054258369!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31cdb53c383b30c7%3A0xc83f51b692ba17bd!2sThe%20Hub%20%40%20A-Park!5e0!3m2!1sen!2smy!4v1774507979068!5m2!1sen!2smy";
+    const GOOGLE_MAPS_URL = "https://maps.app.goo.gl/SfCJExkyFnWcZZ2J9";
+    const WAZE_URL = "https://waze.com/ul/hw282bew6e&navigate=yes";
 
     return (
         <main className="min-h-screen bg-[#FBF7F2] text-zinc-800">

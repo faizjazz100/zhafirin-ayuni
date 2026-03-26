@@ -12,7 +12,7 @@ export default function Page() {
   const DATE_TOP = "May 2, 2026";
   const HASHTAG = "#ZHAFYUNI";
   const COUPLE = "Zhafirin & Ayuni";
-  const SUBLINE = "2.5.2026 | Luminare Hall, Petaling Jaya";
+  const SUBLINE = "2.5.2026 | Hacienda A-Park, Puchong";
   const RSVP_DEADLINE = "28 March 2026";
 
   const CONTACTS = [
@@ -51,13 +51,18 @@ export default function Page() {
 
             {/* Slow subtle zoom */}
             <motion.div
-              initial={{ scale: 1.08 }}
-              animate={{ scale: 1 }}
-              transition={{ duration: 6, ease: "easeOut" }}
+              initial={{ scale: 1.12 }}
+              animate={{ scale: [1.12, 1] }}
+              transition={{
+                duration: 10,
+                ease: "easeInOut",
+                repeat: Infinity,
+                repeatType: "reverse",
+              }}
               className="absolute inset-0"
             >
               <Image
-                src="/hero.jpeg"
+                src="/main.jpeg"
                 alt="Wedding"
                 fill
                 priority
@@ -112,13 +117,13 @@ export default function Page() {
           <div className="mt-8">
             <div className="mx-auto w-full max-w-[520px] rounded-[26px] border border-black/10 bg-white/75 p-7 shadow-[0_18px_60px_rgba(0,0,0,0.07)]">
               <p className="text-sm font-semibold tracking-[0.18em] text-zinc-800">
-                {DATE_TOP.toUpperCase()}
+                {DATE_TOP.toUpperCase()} | Saturday
               </p>
               <div className="mx-auto mt-4 h-px w-20 bg-black/10" />
               <div className="mt-4">
                 <Link
                   href="/rsvp"
-                  className="inline-flex items-center justify-center rounded-xl bg-[#3A3A3A] px-8 py-3 text-xs font-semibold tracking-[0.30em] text-white hover:opacity-90"
+                  className="inline-flex items-center justify-center rounded-xl bg-[#7A0022] px-8 py-3 text-xs font-semibold tracking-[0.30em] text-white hover:opacity-90"
                 >
                   Click to RSVP
                 </Link>
@@ -196,10 +201,11 @@ export default function Page() {
               action={<PrimaryButton href="/schedule">Open Full Schedule</PrimaryButton>}
             />
             <div className="mt-6 grid gap-4 md:grid-cols-2">
-              <InfoCard time="8:00 AM" title="Family Arrival" />
-              <InfoCard time="8:15 AM" title="Solemnisation Ceremony" />
-              <InfoCard time="10:00 AM" title="Arrival of Guests" />
-              <InfoCard time="12:30 PM" title="End of Ceremony" />
+              <InfoCard time="3:00 PM" title="Arrival of Guests (Session 1)" />
+              <InfoCard time="3:30 PM" title="Groom & Bride Entrance" />
+              <InfoCard time="4:30 PM" title="Arrival of Guests (Session 2)" />
+              <InfoCard time="5:30 PM" title="Arrival of Guests (Session 3)" />
+              <InfoCard time="8:00 PM" title="End" />
             </div>
           </Card>
         </motion.section>
@@ -207,23 +213,22 @@ export default function Page() {
         {/* VENUE */}
         <section id="venue" className="mt-10">
           <Card>
-            <SectionHeader label="Venue" title="Luminare Hall, Petaling Jaya" />
+            <SectionHeader label="Venue" title="Hacienda A-Park, Puchong" />
 
             <p className="mt-4 text-[15px] leading-7 text-zinc-700">
-              B-G-02, PJ TRADE CENTRE, 8, Jalan PJU 8/8A, Damansara Perdana, 47820
-              Petaling Jaya, Selangor
+              3275, Jalan Pulau Meranti, Kampung Pulau Meranti, 47100 Puchong, Selangor
             </p>
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
               <SecondaryButton
-                href="https://maps.app.goo.gl/dsUEjfK1u7NhSY386"
+                href="https://maps.app.goo.gl/SfCJExkyFnWcZZ2J9"
                 icon={<FontAwesomeIcon icon={faGoogle} className="h-5 w-5" />}
               >
                 Open in Google Maps
               </SecondaryButton>
 
               <AccentButton
-                href="https://waze.com/ul/hw2860281s&navigate=yes"
+                href="https://waze.com/ul/hw282bew6e&navigate=yes"
                 icon={<FontAwesomeIcon icon={faWaze} className="h-6 w-6" />}
               >
                 Open in Waze
@@ -269,7 +274,7 @@ export default function Page() {
 
                   <div className="mt-4 flex gap-3">
                     <a
-                      className="inline-flex flex-1 items-center justify-center rounded-2xl bg-black px-4 py-2 text-sm text-white hover:opacity-90"
+                      className="inline-flex flex-1 items-center justify-center rounded-2xl bg-[#7A0022] px-4 py-2 text-sm text-white hover:opacity-90"
                       href={`tel:${c.phone.replace(/\D/g, "")}`}
                     >
                       Call
@@ -494,11 +499,32 @@ function SecondaryButton({
   );
 }
 
-function InfoCard({ time, title }: { time: string; title: string }) {
+function InfoCard({
+  time,
+  title,
+}: {
+  time: string;
+  title: string;
+}) {
   return (
-    <div className="flex items-start justify-between gap-4 rounded-3xl border border-black/10 bg-white/75 px-6 py-5 backdrop-blur hover:bg-white">
-      <div className="text-base font-semibold text-zinc-900">{time}</div>
-      <div className="text-sm text-zinc-700 text-right">{title}</div>
+    <div className="rounded-3xl border border-black/10 bg-white/75 px-6 py-5 shadow-[0_10px_30px_rgba(0,0,0,0.06)]">
+
+      {/* FIXED LAYOUT */}
+      <div className="grid grid-cols-[90px_1fr] items-start gap-4">
+
+        {/* TIME (always 1 line) */}
+        <div className="whitespace-nowrap text-base font-semibold text-zinc-900">
+          {time}
+        </div>
+
+        {/* TITLE (can wrap nicely) */}
+        <div className="min-w-0 text-right">
+          <p className="text-sm font-semibold leading-snug text-zinc-800">
+            {title}
+          </p>
+        </div>
+
+      </div>
     </div>
   );
 }
