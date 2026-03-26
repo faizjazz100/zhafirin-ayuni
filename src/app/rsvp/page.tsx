@@ -1,19 +1,12 @@
 import Link from "next/link";
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
 import RsvpForm from "@/src/app/components/RsvpForm";
 
-export default async function RSVPPage() {
-    const cookieStore = await cookies();
-    const guestType = cookieStore.get("guestType")?.value;
-
-    if (guestType === "private") {
-        redirect("/rsvp-private");
-    }
+export default function RSVPPage() {
     return (
         <main className="min-h-screen bg-[#FBF7F2] text-zinc-800">
             <div className="mx-auto max-w-3xl px-5 pb-16 pt-10 sm:px-6 sm:pt-14">
                 <div className="rounded-[28px] border border-white/60 bg-white/70 p-6 shadow-[0_20px_70px_rgba(0,0,0,0.08)] backdrop-blur sm:p-10">
+
                     <p className="text-xs uppercase tracking-[0.28em] text-zinc-500">
                         RSVP
                     </p>
@@ -26,12 +19,8 @@ export default async function RSVPPage() {
                         3:00PM – 8:00PM | 2.5.2026, Saturday | Hacienda A-Park, Puchong
                     </p>
 
-                    <p className="mt-3 text-sm text-zinc-600">
-                        This RSVP is for the <span className="font-semibold">Public</span>{" "}
-                        session.
-                    </p>
-
-                    <RsvpForm session="Public" />
+                    {/* ✅ Clean form (no session prop anymore) */}
+                    <RsvpForm />
 
                     <div className="mt-8 text-sm text-zinc-500">
                         Need help?{" "}
@@ -39,6 +28,7 @@ export default async function RSVPPage() {
                             Contact us →
                         </Link>
                     </div>
+
                 </div>
             </div>
         </main>
