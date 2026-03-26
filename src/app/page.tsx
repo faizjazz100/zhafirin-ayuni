@@ -62,7 +62,7 @@ export default function Page() {
               className="absolute inset-0"
             >
               <Image
-                src="/main.jpeg"
+                src="/logo.png"
                 alt="Wedding"
                 fill
                 priority
