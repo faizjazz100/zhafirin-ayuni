@@ -1,11 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useSyncExternalStore, useCallback, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
 type NavItem =
     | { label: string; href: string; kind?: "link" }
     | { label: string; href: `#${string}`; kind: "anchor" };
+
+function subscribe(callback: () => void) {
+    window.addEventListener("storage", callback);
+    return () => window.removeEventListener("storage", callback);
+}
+
+function getAdminSnapshot() {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("showAdminButton") === "true";
+}
 
 export default function Navbar({
     monogram = "A & Z",
@@ -28,38 +39,69 @@ export default function Navbar({
         [items]
     );
 
+    const searchParams = useSearchParams();
     const [open, setOpen] = useState(false);
 
-    const close = () => setOpen(false);
+    const hasAdminInUrl = searchParams.has("admin");
 
-    // Escape closes menu
+    const savedAdmin = useSyncExternalStore(
+        subscribe,
+        getAdminSnapshot,
+        () => false
+    );
+
+    const showAdminButton = hasAdminInUrl || savedAdmin;
+
+    useEffect(() => {
+        const isAdmin = searchParams.has("admin");
+        const isPublic = searchParams.has("public");
+
+        if (isAdmin) {
+            localStorage.setItem("showAdminButton", "true");
+            window.dispatchEvent(new Event("storage"));
+        }
+
+        if (isPublic) {
+            localStorage.removeItem("showAdminButton");
+            window.dispatchEvent(new Event("storage"));
+            window.history.replaceState({}, "", "/"); // optional (clean URL)
+        }
+    }, [searchParams]);
+
     useEffect(() => {
         const onKeyDown = (e: KeyboardEvent) => {
             if (e.key === "Escape") setOpen(false);
         };
+
         document.addEventListener("keydown", onKeyDown);
         return () => document.removeEventListener("keydown", onKeyDown);
     }, []);
 
-    // Prevent body scroll when open
     useEffect(() => {
         if (!open) return;
+
         const prev = document.body.style.overflow;
         document.body.style.overflow = "hidden";
+
         return () => {
             document.body.style.overflow = prev;
         };
     }, [open]);
 
+    const close = useCallback(() => setOpen(false), []);
+
     const Anchor = ({ href, label }: { href: `#${string}`; label: string }) => (
         <button
-            className="w-full py-3 text-left text-sm font-medium text-zinc-900 hover:text-[#7A0022] transition"
+            className="w-full py-3 text-left text-sm font-medium text-zinc-900 transition hover:text-[#7A0022]"
             onClick={() => {
                 close();
+
                 setTimeout(() => {
                     const id = href.slice(1);
                     const el = document.getElementById(id);
-                    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+                    if (el) {
+                        el.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }
                     history.replaceState(null, "", href);
                 }, 40);
             }}
@@ -70,55 +112,58 @@ export default function Navbar({
 
     return (
         <>
-            {/* Header: no box */}
             <header className="sticky top-0 z-50">
-                {/* subtle fade so text stays readable without a “bar” */}
                 <div className="bg-[#FBF7F2]/55 backdrop-blur-md">
                     <div className="mx-auto max-w-5xl px-5 sm:px-6">
                         <div className="relative flex items-center justify-center py-4">
-                            {/* Left: hamburger (no box) */}
                             <button
                                 aria-label={open ? "Close menu" : "Open menu"}
-                                className="absolute left-0 inline-flex h-10 w-10 items-center justify-center text-zinc-700 hover:text-zinc-900 transition"
+                                className="absolute left-0 inline-flex h-10 w-10 items-center justify-center text-zinc-700 transition hover:text-zinc-900"
                                 onClick={() => setOpen((v) => !v)}
                             >
                                 <Hamburger />
                             </button>
 
-                            {/* Center: monogram clickable */}
                             <Link
                                 href="/"
-                                className="font-serif text-[15px] tracking-[0.22em] text-zinc-700 hover:text-zinc-900 transition"
+                                className="font-serif text-[15px] tracking-[0.22em] text-[#7A0022] font-semibold transition hover:text-zinc-900"
                             >
                                 {monogram}
                             </Link>
 
-                            {/* Right: RSVP as text link (no button box) */}
-                            <Link
-                                href={rsvpHref}
-                                className="absolute right-0 hidden sm:inline-flex text-xs font-semibold tracking-[0.30em] text-[#7A0022] hover:text-[#64001C] transition"
-                            >
-                                RSVP
-                            </Link>
+                            <div className="absolute right-0 hidden items-center gap-4 sm:flex">
+                                <Link
+                                    href={rsvpHref}
+                                    className="text-xs font-semibold tracking-[0.30em] text-[#7A0022] transition hover:text-[#64001C]"
+                                >
+                                    RSVP
+                                </Link>
+
+                                {showAdminButton && (
+                                    <Link
+                                        href="/admin"
+                                        className="text-xs font-semibold tracking-[0.30em] text-[#7A0022] transition hover:text-[#64001C]"
+                                    >
+                                        Admin
+                                    </Link>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
             </header>
 
-            {/* Overlay */}
             <div
                 className={`fixed inset-0 z-40 transition ${open ? "pointer-events-auto" : "pointer-events-none"
                     }`}
                 aria-hidden={!open}
             >
-                {/* backdrop */}
                 <div
                     className={`absolute inset-0 bg-black/40 transition-opacity ${open ? "opacity-100" : "opacity-0"
                         }`}
                     onClick={close}
                 />
 
-                {/* Drawer */}
                 <aside
                     role="dialog"
                     aria-modal="true"
@@ -132,9 +177,8 @@ export default function Navbar({
                                 {monogram}
                             </div>
 
-                            {/* optional: keep this tiny close text, not an X box */}
                             <button
-                                className="text-xs font-semibold tracking-[0.30em] text-zinc-500 hover:text-zinc-900 transition"
+                                className="text-xs font-semibold tracking-[0.30em] text-zinc-500 transition hover:text-zinc-900"
                                 onClick={close}
                             >
                                 CLOSE
@@ -147,14 +191,17 @@ export default function Navbar({
                             <div className="space-y-1">
                                 {navItems.map((it) => {
                                     if ("kind" in it && it.kind === "anchor") {
-                                        return <Anchor key={it.label} href={it.href} label={it.label} />;
+                                        return (
+                                            <Anchor key={it.label} href={it.href} label={it.label} />
+                                        );
                                     }
+
                                     return (
                                         <Link
                                             key={it.label}
                                             href={it.href}
                                             onClick={close}
-                                            className="block py-3 text-sm font-medium text-zinc-900 hover:text-[#7A0022] transition"
+                                            className="block py-3 text-sm font-medium text-zinc-900 transition hover:text-[#7A0022]"
                                         >
                                             {it.label}
                                         </Link>
@@ -164,15 +211,24 @@ export default function Navbar({
 
                             <div className="mt-6 h-px w-full bg-black/10" />
 
-                            {/* Actions (still no boxes; just clean links) */}
                             <div className="mt-4 space-y-3">
                                 <Link
                                     href={rsvpHref}
                                     onClick={close}
-                                    className="block text-sm font-semibold tracking-[0.22em] text-[#7A0022] hover:text-[#64001C] transition"
+                                    className="block text-sm font-semibold tracking-[0.22em] text-[#7A0022] transition hover:text-[#64001C]"
                                 >
                                     RSVP →
                                 </Link>
+
+                                {showAdminButton && (
+                                    <Link
+                                        href="/admin"
+                                        onClick={close}
+                                        className="block text-sm font-semibold tracking-[0.22em] text-[#7A0022] transition hover:text-[#64001C]"
+                                    >
+                                        Admin →
+                                    </Link>
+                                )}
                             </div>
                         </nav>
                     </div>
