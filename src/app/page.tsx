@@ -13,11 +13,11 @@ export default function Page() {
   const HASHTAG = "#ZHAFYUNI";
   const COUPLE = "Zhafirin & Ayuni";
   const SUBLINE = "2.5.2026 | Hacienda A-Park, Puchong";
-  const RSVP_DEADLINE = "28 March 2026";
+  const RSVP_DEADLINE = "18 April 2026";
 
   const CONTACTS = [
     { name: "Darwish (Bride’s)", phone: "012-846 2690" },
-    { name: "Tasha (Bride’s)", phone: "011-635 54265" },
+    { name: "Sawal (Bride’s)", phone: "019-377 7001" },
     { name: "Mai (Groom’s)", phone: "013-355 2455" },
     { name: "Elin (Groom’s)", phone: "019-226 6996" },
   ];
@@ -47,16 +47,16 @@ export default function Page() {
           transition={{ duration: 0.6, ease: "easeOut" }}
           className="relative overflow-hidden rounded-[32px] shadow-[0_40px_120px_rgba(0,0,0,0.25)]"
         >
-          <div className="relative h-[460px] sm:h-[560px] md:h-[680px] overflow-hidden">
+          <div className="relative h-[350px] sm:h-[560px] md:h-[680px] overflow-hidden">
 
             {/* Slow subtle zoom */}
             <motion.div
-              initial={{ scale: 1.12 }}
-              animate={{ scale: [1.12, 1] }}
+              initial={{ scale: 0.6 }}
+              animate={{ scale: [0.6, 0.7] }}
               transition={{
-                duration: 10,
+                duration: 5,
                 ease: "easeInOut",
-                repeat: Infinity,
+                repeat: 0,
                 repeatType: "reverse",
               }}
               className="absolute inset-0"
@@ -83,31 +83,26 @@ export default function Page() {
       </section>
 
       {/* FLORAL DIVIDER */}
-      <section className="mx-auto max-w-5xl px-5 sm:px-6">
-        <div className="relative mt-6 sm:mt-8">
-          {/* Soft divider background */}
-          <div className="h-16 sm:h-20 rounded-[28px] bg-[#FBF7F2]" />
-
-          {/* Floral overlay */}
-          <div className="pointer-events-none absolute inset-x-0 top-0">
-            <FloralCorners />
-          </div>
+      <div className="mx-auto max-w-5xl px-5 sm:px-6">
+        <div className="relative -mt-6 sm:-mt-8">   {/* ← negative margin to overlap hero */}
+          <div className="mx-auto h-16 sm:h-20 rounded-[22px] bg-[#FBF7F2]" />
+          <FloralCorners />
         </div>
-      </section>
+      </div>
 
       {/* MAIN CENTER STACK */}
-      <section className="mx-auto max-w-5xl px-5 pb-14 pt-6 sm:px-6 sm:pb-20">
+      <section className="mt-6 mx-auto max-w-5xl px-5 pb-14 pt-6 sm:px-6 sm:pb-20">
         <div className="mx-auto max-w-2xl text-center">
           <p className="text-[12px] font-semibold uppercase tracking-[0.34em] text-zinc-600">
             {SUBLINE}
           </p>
 
-          <h1 className="mt-5 font-script text-5xl text-zinc-800 sm:text-6xl">
+          <h1 className="mt-5 font-script text-5xl text-zinc-800 sm:text-6xl" style={{ fontFamily: "'Great Vibes', cursive" }}>
             {COUPLE}
           </h1>
 
           <p className="mt-4 text-xs font-semibold uppercase tracking-[0.34em] text-zinc-600">
-            {DATE_TOP}
+            {DATE_TOP} | SATURDAY
           </p>
 
           <div className="mt-3 text-[12px] font-semibold uppercase tracking-[0.30em] text-zinc-600">
@@ -117,7 +112,7 @@ export default function Page() {
           <div className="mt-8">
             <div className="mx-auto w-full max-w-[520px] rounded-[26px] border border-black/10 bg-white/75 p-7 shadow-[0_18px_60px_rgba(0,0,0,0.07)]">
               <p className="text-sm font-semibold tracking-[0.18em] text-zinc-800">
-                {DATE_TOP.toUpperCase()} | Saturday
+                {DATE_TOP.toUpperCase()} | SATURDAY
               </p>
               <div className="mx-auto mt-4 h-px w-20 bg-black/10" />
               <div className="mt-4">

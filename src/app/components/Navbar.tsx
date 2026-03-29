@@ -19,7 +19,7 @@ function getAdminSnapshot() {
 }
 
 export default function Navbar({
-    monogram = "A & Z",
+    monogram = "A TO Z",
     rsvpHref = "/rsvp",
     items,
 }: {
@@ -30,11 +30,11 @@ export default function Navbar({
     const navItems = useMemo<NavItem[]>(
         () =>
             items ?? [
-                { label: "Home", href: "/", kind: "link" },
-                { label: "Our Story", href: "/our-story", kind: "link" },
-                { label: "Schedule", href: "/schedule", kind: "link" },
-                { label: "Venue", href: "/venue", kind: "link" },
-                { label: "Contact", href: "/contact", kind: "link" },
+                { label: "HOME", href: "/", kind: "link" },
+                { label: "OUR STORY", href: "/our-story", kind: "link" },
+                { label: "SCHEDULE", href: "/schedule", kind: "link" },
+                { label: "VENUE", href: "/venue", kind: "link" },
+                { label: "CONTACT", href: "/contact", kind: "link" },
             ],
         [items]
     );

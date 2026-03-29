@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import FloralCorner2 from "@/src/app/components/FloralCorner2";
 
 const TABLE = "rsvps";
 
@@ -135,7 +136,12 @@ export default function MessageCarouselSection() {
     if (items.length === 0) return null;
 
     return (
-        <section className="mt-10">
+        <section className="relative mt-10">
+            {/* Top-right corner */}
+            <FloralCorner2 position="top-right" />
+
+            {/* Top-left corner */}
+            <FloralCorner2 position="top-left" className="opacity-70" />
             <div className="rounded-[28px] border border-white/55 bg-white/65 p-6 shadow-[0_20px_70px_rgba(0,0,0,0.10)] sm:p-10">
                 <div className="text-center">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.34em] text-[#7A0022]/80">
