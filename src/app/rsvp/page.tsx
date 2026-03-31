@@ -19,6 +19,9 @@ export default function RSVPPage() {
                         3:00PM – 8:00PM | 2.5.2026, Saturday | Hacienda A-Park, Puchong
                     </p>
 
+                    <p className="mt-3 text-sm text-zinc-600">
+                        Please select your assigned session, and we kindly invite you to wear your preferred theme color (other than silver) on the wedding day. Thank you!
+                    </p>
                     {/* ✅ Clean form (no session prop anymore) */}
                     <RsvpForm />
 

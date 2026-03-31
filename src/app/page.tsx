@@ -12,7 +12,7 @@ export default function Page() {
   const DATE_TOP = "May 2, 2026";
   const HASHTAG = "#ZHAFYUNI";
   const COUPLE = "Zhafirin & Ayuni";
-  const SUBLINE = "2.5.2026 | Hacienda A-Park, Puchong";
+  const SUBLINE = "Hacienda A-Park, Puchong";
   const RSVP_DEADLINE = "18 April 2026";
 
   const CONTACTS = [
@@ -128,7 +128,12 @@ export default function Page() {
                 RSVP by{" "}
                 <span className="font-semibold text-zinc-900">{RSVP_DEADLINE}</span>
               </div>
-              <div className="mt-6 text-xs font-semibold tracking-[0.30em] text-[#7A0022]">
+              <div className="mx-auto mt-4 h-px w-20 bg-black/10" />
+              <p className="mt-4 text-xs font-semibold uppercase tracking-[0.15em] text-zinc-600">
+                Wedding Attire:<br />
+                Any color except silver
+              </p>
+              <div className="mt-4 text-xs font-semibold tracking-[0.25em] text-[#7A0022]">
                 {HASHTAG}
               </div>
             </div>
@@ -156,7 +161,7 @@ export default function Page() {
           <Card>
             <SectionHeader
               label="Our Story"
-              title="Zhafirin & Ayuni"
+              title={HASHTAG}
               subtitle="A journey that began quietly, and grew into something beautiful."
             />
 
