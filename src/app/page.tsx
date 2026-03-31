@@ -12,7 +12,7 @@ export default function Page() {
   const DATE_TOP = "May 2, 2026";
   const HASHTAG = "#ZHAFYUNI";
   const COUPLE = "Zhafirin & Ayuni";
-  const SUBLINE = "Hacienda A-Park, Puchong";
+  const SUBLINE = "Hacienda A-Park, Puchong, Selangor";
   const RSVP_DEADLINE = "18 April 2026";
 
   const CONTACTS = [
