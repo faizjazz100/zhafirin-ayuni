@@ -17,7 +17,7 @@ export default function Page() {
 
   const CONTACTS = [
     { name: "Darwish (Bride’s)", phone: "012-846 2690" },
-    { name: "Sawal (Bride’s)", phone: "019-377 7001" },
+    { name: "En Firdaus (Bride’s)", phone: "019-282 7625" },
     { name: "Mai (Groom’s)", phone: "013-355 2455" },
     { name: "Elin (Groom’s)", phone: "019-226 6996" },
   ];
@@ -203,10 +203,8 @@ export default function Page() {
             <div className="mt-6 grid gap-4 md:grid-cols-2">
               <InfoCard time="3:00 PM" title="Arrival of Guests (Session 1)" />
               <InfoCard time="3:30 PM" title="Groom & Bride Entrance" />
-              <InfoCard time="4:00 PM" title="Photo Session" />
               <InfoCard time="4:30 PM" title="Arrival of Guests (Session 2)" />
               <InfoCard time="4:30 PM" title="Makan Beradab" />
-              <InfoCard time="5:00 PM" title="Photo Session" />
               <InfoCard time="5:30 PM" title="Arrival of Guests (Session 3)" />
               <InfoCard time="5:45 PM" title="Cake Cutting" />
               <InfoCard time="8:00 PM" title="End" />

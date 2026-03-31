@@ -9,7 +9,7 @@ export default function ContactPage() {
 
     const CONTACTS = [
         { name: "Darwish (Bride’s)", phoneDisplay: "012-846 2690", phoneE164: "60128462690" },
-        { name: "Sawal (Bride’s)", phoneDisplay: "019-377 7001", phoneE164: "60193777001" },
+        { name: "En Firdaus (Bride’s)", phoneDisplay: "019-282 7625", phoneE164: "60192827625" },
         { name: "Mai (Groom’s)", phoneDisplay: "013-355 2455", phoneE164: "60133552455" },
         { name: "Elin (Groom’s)", phoneDisplay: "019-226 6996", phoneE164: "60192266996" },
     ];
