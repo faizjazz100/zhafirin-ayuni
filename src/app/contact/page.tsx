@@ -59,7 +59,7 @@ export default function ContactPage() {
                                 <div className="mt-4 flex gap-3">
                                     <a
                                         href={`tel:+${c.phoneE164}`}
-                                        className="inline-flex flex-1 items-center justify-center rounded-2xl bg-black px-4 py-2 text-sm text-white hover:opacity-90"
+                                        className="inline-flex flex-1 items-center justify-center rounded-2xl bg-[#7A0022] px-4 py-2 text-sm text-white hover:opacity-90"
                                     >
                                         Call
                                     </a>
@@ -81,9 +81,8 @@ export default function ContactPage() {
                     <div className="mt-8 rounded-[28px] border border-black/10 bg-white/75 p-6">
                         <p className="text-sm font-semibold text-zinc-900">Common questions</p>
                         <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-zinc-700">
-                            <li>If you can’t attend, please still RSVP so we can update the list.</li>
                             <li>For directions / parking, check the Venue section on the Home page.</li>
-                            <li>If you received a private invite link, please use that link to RSVP.</li>
+
                         </ul>
                     </div>
 

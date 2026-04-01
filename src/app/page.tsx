@@ -177,7 +177,7 @@ export default function Page() {
             <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:justify-center">
               <Link
                 href="/our-story"
-                className="inline-flex items-center justify-center rounded-full border border-black/10 bg-white/85 px-6 py-3 text-sm text-zinc-900 hover:bg-white"
+                className="inline-flex w-full items-center justify-center rounded-full bg-[#7A0022] px-5 py-2.5 text-sm text-white hover:bg-white"
               >
                 Continue reading →
               </Link>
@@ -199,7 +199,7 @@ export default function Page() {
               label="Details"
               title="Schedule Preview"
               subtitle="Full schedule is on the Schedule page."
-              action={<PrimaryButton href="/schedule">Open Full Schedule</PrimaryButton>}
+              action={<PrimaryButton href="/schedule">View Full Schedule</PrimaryButton>}
             />
             <div className="mt-6 grid gap-4 md:grid-cols-2">
               <InfoCard time="3:00 PM" title="Arrival of Guests (Session 1)" />
@@ -230,11 +230,16 @@ export default function Page() {
                 Open in Google Maps
               </SecondaryButton>
 
-              <AccentButton
+              <SecondaryButton
                 href="https://waze.com/ul/hw282bew6e&navigate=yes"
                 icon={<FontAwesomeIcon icon={faWaze} className="h-6 w-6" />}
               >
                 Open in Waze
+              </SecondaryButton>
+              <AccentButton
+                href="/venue"
+              >
+                Open Venue Page
               </AccentButton>
             </div>
           </Card>
@@ -298,7 +303,7 @@ export default function Page() {
             <div className="mt-6 sm:hidden">
               <Link
                 href="/contact"
-                className="inline-flex w-full items-center justify-center rounded-full border border-black/10 bg-white/80 px-5 py-2.5 text-sm text-zinc-900 backdrop-blur hover:bg-white"
+                className="inline-flex w-full items-center justify-center rounded-full bg-[#7A0022] px-5 py-2.5 text-sm text-white hover:bg-white"
               >
                 Open Contact Page
               </Link>
