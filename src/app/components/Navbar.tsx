@@ -147,6 +147,14 @@ export default function Navbar({
                                         Admin
                                     </Link>
                                 )}
+                                {showAdminButton && (
+                                    <Link
+                                        href="/adminv2"
+                                        className="text-xs font-semibold tracking-[0.30em] text-[#7A0022] transition hover:text-[#64001C]"
+                                    >
+                                        AdminV2
+                                    </Link>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -227,6 +235,15 @@ export default function Navbar({
                                         className="block text-sm font-semibold tracking-[0.22em] text-[#7A0022] transition hover:text-[#64001C]"
                                     >
                                         Admin →
+                                    </Link>
+                                )}
+                                {showAdminButton && (
+                                    <Link
+                                        href="/adminv2"
+                                        onClick={close}
+                                        className="block text-sm font-semibold tracking-[0.22em] text-[#7A0022] transition hover:text-[#64001C]"
+                                    >
+                                        Adminv2 →
                                     </Link>
                                 )}
                             </div>

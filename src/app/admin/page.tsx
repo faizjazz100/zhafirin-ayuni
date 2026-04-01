@@ -195,6 +195,12 @@ export default function AdminPage() {
                             >
                                 Manage Sessions
                             </Link>
+                            <Link
+                                href="/adminv2"
+                                className="inline-flex items-center justify-center rounded-full bg-[#7A0022] px-5 py-3 text-sm font-medium text-white shadow-sm hover:bg-[#64001C] transition"
+                            >
+                                New view (Admin Version 2)
+                            </Link>
                             <select
                                 value={sessionFilter}
                                 onChange={(e) => setSessionFilter(e.target.value as SessionFilter)}
