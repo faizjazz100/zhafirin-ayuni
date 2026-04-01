@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import PageContainer from "@/src/app/components/PageContainer";
+import Image from "next/image";
+import { useState } from "react";
 
 export default function VenuePage() {
     const COUPLE = "Zhafirin & Ayuni";
@@ -72,6 +74,8 @@ export default function VenuePage() {
                         </div>
                     </div>
 
+                    <VenueMapLightbox />
+
                     {/* Map embed */}
                     <div className="mt-6 overflow-hidden rounded-[28px] border border-black/10 bg-white/80 shadow-[0_10px_30px_rgba(0,0,0,0.06)]">
                         <div className="relative w-full" style={{ paddingTop: "56.25%" }}>
@@ -119,5 +123,51 @@ export default function VenuePage() {
                 </motion.div>
             </PageContainer>
         </main>
+    );
+}
+
+function VenueMapLightbox() {
+    const [open, setOpen] = useState(false);
+
+    return (
+        <>
+            {/* Clickable thumbnail */}
+            <div
+                className="mt-6 overflow-hidden rounded-[28px] border border-black/10 bg-white/80 shadow-[0_10px_30px_rgba(0,0,0,0.06)] cursor-zoom-in"
+                onClick={() => setOpen(true)}
+            >
+                <Image
+                    src="/map.jpeg"
+                    alt="Venue map"
+                    width={900}
+                    height={600}
+                    className="w-full object-contain"
+                />
+            </div>
+
+            {/* Lightbox overlay */}
+            {open && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+                    onClick={() => setOpen(false)}
+                >
+                    <div className="relative max-w-4xl w-full" onClick={(e) => e.stopPropagation()}>
+                        <button
+                            onClick={() => setOpen(false)}
+                            className="absolute -top-4 -right-4 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white text-zinc-900 shadow-lg text-lg font-bold"
+                        >
+                            ✕
+                        </button>
+                        <Image
+                            src="/map.jpeg"
+                            alt="Venue map"
+                            width={1800}
+                            height={1200}
+                            className="w-full rounded-[20px] object-contain"
+                        />
+                    </div>
+                </div>
+            )}
+        </>
     );
 }

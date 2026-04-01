@@ -94,7 +94,8 @@ export default function Page() {
       <section className="mt-6 mx-auto max-w-5xl px-5 pb-14 pt-6 sm:px-6 sm:pb-20">
         <div className="mx-auto max-w-2xl text-center">
           <p className="text-[12px] font-semibold uppercase tracking-[0.34em] text-zinc-600">
-            {SUBLINE}
+            Hacienda A-Park<br />
+            Puchong, Selangor
           </p>
 
           <h1 className="mt-5 font-script text-5xl text-zinc-800 sm:text-6xl" style={{ fontFamily: "'Great Vibes', cursive" }}>
