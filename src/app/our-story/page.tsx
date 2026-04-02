@@ -26,7 +26,7 @@ export default function OurStoryPage() {
                         </p>
 
                         <h1 className="mt-2 font-serif text-4xl font-semibold text-zinc-900 sm:text-5xl">
-                            Zhafirin & Ayuni
+                            #ZHAFYUNI
                         </h1>
 
                         <p className="mx-auto mt-3 max-w-2xl text-sm text-zinc-600">
