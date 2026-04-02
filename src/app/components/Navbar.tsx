@@ -138,22 +138,6 @@ export default function Navbar({
                                         AdminV2
                                     </Link>
                                 )}
-                                {isAdmin && (
-                                    <Link
-                                        href="/?session1"
-                                        className="text-xs font-semibold tracking-[0.30em] text-[#7A0022] transition hover:text-[#64001C]"
-                                    >
-                                        Private (Session1)
-                                    </Link>
-                                )}
-                                {isAdmin && (
-                                    <Link
-                                        href="/?type=public"
-                                        className="text-xs font-semibold tracking-[0.30em] text-[#7A0022] transition hover:text-[#64001C]"
-                                    >
-                                        Public
-                                    </Link>
-                                )}
                             </div>
                         </div>
                     </div>
@@ -245,24 +229,6 @@ export default function Navbar({
                                         className="block text-sm font-semibold tracking-[0.22em] text-[#7A0022] transition hover:text-[#64001C]"
                                     >
                                         Adminv2 →
-                                    </Link>
-                                )}
-                                {isAdmin && (
-                                    <Link
-                                        href="/?session1"
-                                        onClick={close}
-                                        className="block text-sm font-semibold tracking-[0.22em] text-[#7A0022] transition hover:text-[#64001C]"
-                                    >
-                                        Private →
-                                    </Link>
-                                )}
-                                {isAdmin && (
-                                    <Link
-                                        href="/?type=public"
-                                        onClick={close}
-                                        className="block text-sm font-semibold tracking-[0.22em] text-[#7A0022] transition hover:text-[#64001C]"
-                                    >
-                                        Public →
                                     </Link>
                                 )}
                             </div>
