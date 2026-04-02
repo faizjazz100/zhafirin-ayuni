@@ -17,18 +17,22 @@ type RsvpUsageRow = {
   guests: number | null;
 };
 
-type SessionAvailability = Record<
-  Session,
-  { remaining: number; limit: number; used: number }
->;
+type SessionAvailability = {
+  [key in Session]: { remaining: number; limit: number; used: number };
+};
+
+type Props = {
+  lockedSession?: Session | null;
+};
 
 const SESSION_OPTIONS: Session[] = ["Session 1", "Session 2", "Session 3"];
 
-const SESSION_TIME: Record<Session, string> = {
+const SESSION_TIME: Record<string, string> = {
   "Session 1": "3:00 PM",
   "Session 2": "4:30 PM",
   "Session 3": "5:30 PM",
 };
+
 function normalizePhone(input: string) {
   let cleaned = input.trim().replace(/[^\d+]/g, "");
 
@@ -36,7 +40,6 @@ function normalizePhone(input: string) {
     cleaned = "+" + cleaned.replace(/\+/g, "");
   }
 
-  // Malaysian local format support
   if (/^01\d{8,9}$/.test(cleaned)) {
     return `+60${cleaned.slice(1)}`;
   }
@@ -52,12 +55,14 @@ function isValidInternationalPhone(phone: string) {
   return /^\+[1-9]\d{7,14}$/.test(phone);
 }
 
-export default function RsvpForm() {
+export default function RsvpForm({ lockedSession }: Props) {
   const router = useRouter();
 
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
-  const [selectedSession, setSelectedSession] = useState<Session>("Session 1");
+  const [selectedSession, setSelectedSession] = useState<Session>(
+    lockedSession ?? "Session 2"
+  );
   const [guestOf, setGuestOf] = useState<GuestOf>("Groom");
 
   const [guests, setGuests] = useState(1);
@@ -83,6 +88,11 @@ export default function RsvpForm() {
     [guests]
   );
 
+  // Sessions visible in the picker
+  const visibleSessions = lockedSession
+    ? SESSION_OPTIONS
+    : SESSION_OPTIONS.filter((s) => s !== "Session 1");
+
   async function loadSessionAvailability() {
     setLoadingSessions(true);
 
@@ -97,7 +107,7 @@ export default function RsvpForm() {
       return;
     }
 
-    const usageMap: Record<Session, number> = {
+    const usageMap: { [key in Session]: number } = {
       "Session 1": 0,
       "Session 2": 0,
       "Session 3": 0,
@@ -137,7 +147,7 @@ export default function RsvpForm() {
   }, []);
 
   function findNextAvailableSession(guestCount: number) {
-    return SESSION_OPTIONS.find(
+    return visibleSessions.find(
       (session) => (sessionAvailability[session]?.remaining ?? 0) >= guestCount
     );
   }
@@ -146,11 +156,13 @@ export default function RsvpForm() {
     setGuests(n);
     setAdults((prev) => Math.min(Math.max(prev, 1), n));
 
-    const currentRemaining = sessionAvailability[selectedSession]?.remaining ?? 0;
-    if (currentRemaining < n) {
-      const nextAvailable = findNextAvailableSession(n);
-      if (nextAvailable) {
-        setSelectedSession(nextAvailable);
+    if (!lockedSession) {
+      const currentRemaining = sessionAvailability[selectedSession]?.remaining ?? 0;
+      if (currentRemaining < n) {
+        const nextAvailable = findNextAvailableSession(n);
+        if (nextAvailable) {
+          setSelectedSession(nextAvailable);
+        }
       }
     }
   }
@@ -266,37 +278,44 @@ export default function RsvpForm() {
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div>
           <label className="text-sm text-zinc-600">Session</label>
-          <select
-            className="mt-2 w-full rounded-2xl border border-zinc-200 bg-white px-3 py-3 text-sm disabled:bg-zinc-100"
-            value={selectedSession}
-            onChange={(e) => setSelectedSession(e.target.value as Session)}
-            disabled={loadingSessions}
-          >
-            {SESSION_OPTIONS.map((session) => {
-              const info = sessionAvailability[session];
-              const remaining = info?.remaining ?? 0;
-              const disabled = remaining < guests;
 
-              return (
-                <option key={session} value={session} disabled={disabled}>
-                  {session} ({SESSION_TIME[session]}){" "}
-                  {loadingSessions
-                    ? ""
-                    : disabled
-                      ? "- Full"
-                      : `- ${remaining} left`}
-                </option>
-              );
-            })}
-          </select>
+          {lockedSession ? (
+            <div className="mt-2 rounded-2xl border border-zinc-200 bg-zinc-50 px-3.5 py-3 text-sm text-zinc-700">
+              {lockedSession} — {SESSION_TIME[lockedSession]}
+            </div>
+          ) : (
+            <select
+              className="mt-2 w-full rounded-2xl border border-zinc-200 bg-white px-3 py-3 text-sm disabled:bg-zinc-100"
+              value={selectedSession}
+              onChange={(e) => setSelectedSession(e.target.value as Session)}
+              disabled={loadingSessions}
+            >
+              {visibleSessions.map((session) => {
+                const info = sessionAvailability[session];
+                const remaining = info?.remaining ?? 0;
+                const disabled = remaining < guests;
 
-          {!loadingSessions && (
+                return (
+                  <option key={session} value={session} disabled={disabled}>
+                    {session} ({SESSION_TIME[session]}){" "}
+                    {loadingSessions
+                      ? ""
+                      : disabled
+                        ? "- Full"
+                        : `- ${remaining} left`}
+                  </option>
+                );
+              })}
+            </select>
+          )}
+
+          {!lockedSession && !loadingSessions && (
             <p className="mt-2 text-xs text-zinc-500">
               Choose a session with enough slots for {guests} guest{guests > 1 ? "s" : ""}.
             </p>
           )}
 
-          {!loadingSessions && (sessionAvailability[selectedSession]?.remaining ?? 0) < guests && (
+          {!lockedSession && !loadingSessions && (sessionAvailability[selectedSession]?.remaining ?? 0) < guests && (
             <p className="mt-2 text-xs text-red-600">
               This session does not have enough slots for {guests} guest{guests > 1 ? "s" : ""}.
               Please choose another session.
@@ -306,7 +325,6 @@ export default function RsvpForm() {
 
         <div className="mt-3">
           <p className="text-sm text-zinc-500">Selected Time</p>
-
           <div className="mt-1 inline-flex items-center rounded-full bg-[#7A0022]/10 px-4 py-1.5 text-sm font-medium text-[#7A0022]">
             {SESSION_TIME[selectedSession]}
           </div>

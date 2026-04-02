@@ -4,7 +4,7 @@ import "./globals.css";
 import Navbar from "@/src/app/components/Navbar";
 
 export const metadata: Metadata = {
-  title: "Ayuni & Zhafirin",
+  title: "Zhafirin & Ayuni",
   description: "Wedding invitation",
 };
 

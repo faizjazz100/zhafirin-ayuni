@@ -1,22 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useSyncExternalStore, useCallback, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useCallback, useState } from "react";
+import { supabase } from "@/lib/supabase";
+import type { User } from "@supabase/supabase-js";
+
 
 type NavItem =
     | { label: string; href: string; kind?: "link" }
     | { label: string; href: `#${string}`; kind: "anchor" };
-
-function subscribe(callback: () => void) {
-    window.addEventListener("storage", callback);
-    return () => window.removeEventListener("storage", callback);
-}
-
-function getAdminSnapshot() {
-    if (typeof window === "undefined") return false;
-    return localStorage.getItem("showAdminButton") === "true";
-}
 
 export default function Navbar({
     monogram = "A TO Z",
@@ -39,34 +31,25 @@ export default function Navbar({
         [items]
     );
 
-    const searchParams = useSearchParams();
     const [open, setOpen] = useState(false);
 
-    const hasAdminInUrl = searchParams.has("admin");
-
-    const savedAdmin = useSyncExternalStore(
-        subscribe,
-        getAdminSnapshot,
-        () => false
-    );
-
-    const showAdminButton = hasAdminInUrl || savedAdmin;
+    const [user, setUser] = useState<User | null>(null);
 
     useEffect(() => {
-        const isAdmin = searchParams.has("admin");
-        const isPublic = searchParams.has("public");
+        // Get current session on mount
+        supabase.auth.getSession().then(({ data }) => {
+            setUser(data.session?.user ?? null);
+        });
 
-        if (isAdmin) {
-            localStorage.setItem("showAdminButton", "true");
-            window.dispatchEvent(new Event("storage"));
-        }
+        // Stay in sync with login/logout
+        const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+            setUser(session?.user ?? null);
+        });
 
-        if (isPublic) {
-            localStorage.removeItem("showAdminButton");
-            window.dispatchEvent(new Event("storage"));
-            window.history.replaceState({}, "", "/"); // optional (clean URL)
-        }
-    }, [searchParams]);
+        return () => listener.subscription.unsubscribe();
+    }, []);
+
+    const isAdmin = !!user;
 
     useEffect(() => {
         const onKeyDown = (e: KeyboardEvent) => {
@@ -139,7 +122,7 @@ export default function Navbar({
                                     RSVP
                                 </Link>
 
-                                {showAdminButton && (
+                                {isAdmin && (
                                     <Link
                                         href="/admin"
                                         className="text-xs font-semibold tracking-[0.30em] text-[#7A0022] transition hover:text-[#64001C]"
@@ -147,12 +130,28 @@ export default function Navbar({
                                         Admin
                                     </Link>
                                 )}
-                                {showAdminButton && (
+                                {isAdmin && (
                                     <Link
                                         href="/adminv2"
                                         className="text-xs font-semibold tracking-[0.30em] text-[#7A0022] transition hover:text-[#64001C]"
                                     >
                                         AdminV2
+                                    </Link>
+                                )}
+                                {isAdmin && (
+                                    <Link
+                                        href="/?session1"
+                                        className="text-xs font-semibold tracking-[0.30em] text-[#7A0022] transition hover:text-[#64001C]"
+                                    >
+                                        Private (Session1)
+                                    </Link>
+                                )}
+                                {isAdmin && (
+                                    <Link
+                                        href="/?type=public"
+                                        className="text-xs font-semibold tracking-[0.30em] text-[#7A0022] transition hover:text-[#64001C]"
+                                    >
+                                        Public
                                     </Link>
                                 )}
                             </div>
@@ -227,8 +226,10 @@ export default function Navbar({
                                 >
                                     RSVP →
                                 </Link>
-
-                                {showAdminButton && (
+                                {isAdmin && (
+                                    <div className="mt-6 h-px w-full bg-black/10" />
+                                )}
+                                {isAdmin && (
                                     <Link
                                         href="/admin"
                                         onClick={close}
@@ -237,13 +238,31 @@ export default function Navbar({
                                         Admin →
                                     </Link>
                                 )}
-                                {showAdminButton && (
+                                {isAdmin && (
                                     <Link
                                         href="/adminv2"
                                         onClick={close}
                                         className="block text-sm font-semibold tracking-[0.22em] text-[#7A0022] transition hover:text-[#64001C]"
                                     >
                                         Adminv2 →
+                                    </Link>
+                                )}
+                                {isAdmin && (
+                                    <Link
+                                        href="/?session1"
+                                        onClick={close}
+                                        className="block text-sm font-semibold tracking-[0.22em] text-[#7A0022] transition hover:text-[#64001C]"
+                                    >
+                                        Private →
+                                    </Link>
+                                )}
+                                {isAdmin && (
+                                    <Link
+                                        href="/?type=public"
+                                        onClick={close}
+                                        className="block text-sm font-semibold tracking-[0.22em] text-[#7A0022] transition hover:text-[#64001C]"
+                                    >
+                                        Public →
                                     </Link>
                                 )}
                             </div>

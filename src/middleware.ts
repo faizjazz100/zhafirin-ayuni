@@ -4,26 +4,32 @@ import { createServerClient } from "@supabase/ssr";
 
 export async function middleware(request: NextRequest) {
   const url = request.nextUrl;
-  const type = url.searchParams.get("type"); // public/private from entry link
+  const type = url.searchParams.get("type");  
+  const hasSession1 = url.searchParams.has("session1");
 
   // We'll create a response we can add cookies to
   const response = NextResponse.next();
 
   // ✅ 1) Handle guest type cookie for the whole site
-  if (type === "private" || type === "public") {
-    // Set cookie so RSVP page can read it server-side later
-    response.cookies.set("guestType", type, {
-      path: "/",
-      maxAge: 60 * 60 * 24 * 365, // 1 year
-      sameSite: "lax",
-    });
+if (type === "private" || type === "public" || hasSession1) {
+  let guestType: string = type ?? "public"; // default to public
 
-    // Optional: clean the URL (remove ?type=...) to avoid sharing it around
-    const cleanUrl = request.nextUrl.clone();
-    cleanUrl.searchParams.delete("type");
-
-    return NextResponse.redirect(cleanUrl, { headers: response.headers });
+  if (hasSession1) {
+    guestType = "private";
   }
+
+  response.cookies.set("guestType", guestType, {
+    path: "/",
+    maxAge: 60 * 60 * 24 * 365,
+    sameSite: "lax",
+  });
+
+  const cleanUrl = request.nextUrl.clone();
+  cleanUrl.searchParams.delete("type");
+  cleanUrl.searchParams.delete("session1");
+
+  return NextResponse.redirect(cleanUrl, { headers: response.headers });
+}
 
   // ✅ 2) Keep your existing /admin protection
   // Only do Supabase auth work for /admin routes (important for performance)

@@ -1,13 +1,24 @@
 import Link from "next/link";
 import RsvpForm from "@/src/app/components/RsvpForm";
+import { cookies } from "next/headers";
+import type { Session } from "@/src/app/components/RsvpForm";
 
-export default function RSVPPage() {
+export default async function RSVPPage() {
+    const cookieStore = await cookies();
+    const guestType = cookieStore.get("guestType")?.value;
+
+    let lockedSession: Session | null = null;
+
+    if (guestType === "private") {
+        lockedSession = "Session 1";
+    }
+
     return (
         <main className="min-h-screen bg-[#FBF7F2] text-zinc-800">
             <div className="mx-auto max-w-3xl px-5 pb-16 pt-10 sm:px-6 sm:pt-14">
                 <div className="rounded-[28px] border border-white/60 bg-white/70 p-6 shadow-[0_20px_70px_rgba(0,0,0,0.08)] backdrop-blur sm:p-10">
 
-                    <p className="text-xs text-[#7A0022]/80 texuppercase tracking-[0.28em] ">
+                    <p className="text-xs text-[#7A0022]/80 uppercase tracking-[0.28em]">
                         RSVP
                     </p>
 
@@ -22,11 +33,11 @@ export default function RSVPPage() {
                     <p className="mt-3 text-sm text-zinc-600">
                         Please select your assigned session, and we kindly invite you to wear your preferred theme color (other than silver) on the wedding day. Thank you!
                     </p>
-                    {/* ✅ Clean form (no session prop anymore) */}
-                    <RsvpForm />
+
+                    <RsvpForm lockedSession={lockedSession} />
 
                     <div className="mt-8 text-sm text-zinc-500">
-                        Need help?{" "}
+                        Need help{" "}
                         <Link href="/contact" className="font-medium text-zinc-900">
                             Contact us →
                         </Link>
