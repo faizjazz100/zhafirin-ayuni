@@ -221,7 +221,7 @@ export default function RsvpForm() {
   return (
     <form onSubmit={submit} className="mt-8 space-y-5">
       <div>
-        <label className="text-sm text-zinc-600">Preffered Name</label>
+        <label className="text-sm text-zinc-600">Preferred Name</label>
         <input
           className="mt-2 w-full rounded-2xl border border-zinc-200 bg-white p-3.5 outline-none focus:border-zinc-400"
           value={fullName}
