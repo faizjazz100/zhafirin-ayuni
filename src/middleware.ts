@@ -6,16 +6,21 @@ export async function middleware(request: NextRequest) {
   const url = request.nextUrl;
   const type = url.searchParams.get("type");  
   const hasSession1 = url.searchParams.has("session1");
+  const hasPublic = url.searchParams.has("public");
 
   // We'll create a response we can add cookies to
   const response = NextResponse.next();
 
   // ✅ 1) Handle guest type cookie for the whole site
-if (type === "private" || type === "public" || hasSession1) {
+if (type === "private" || type === "public" || hasSession1 || hasPublic) {
   let guestType: string = type ?? "public"; // default to public
 
   if (hasSession1) {
     guestType = "private";
+  }
+
+  if (hasPublic) {
+    guestType = "public";
   }
 
   response.cookies.set("guestType", guestType, {
@@ -27,6 +32,7 @@ if (type === "private" || type === "public" || hasSession1) {
   const cleanUrl = request.nextUrl.clone();
   cleanUrl.searchParams.delete("type");
   cleanUrl.searchParams.delete("session1");
+  cleanUrl.searchParams.delete("public");
 
   return NextResponse.redirect(cleanUrl, { headers: response.headers });
 }
