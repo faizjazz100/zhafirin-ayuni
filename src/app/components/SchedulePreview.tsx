@@ -1,4 +1,8 @@
-import { getSchedulePreview } from "@/lib/schedule.server";
+"use client";
+
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
+import { ScheduleItem } from "@/lib/schedule";
 
 function InfoCard({ time, title }: { time: string; title: string }) {
     return (
@@ -17,15 +21,44 @@ function InfoCard({ time, title }: { time: string; title: string }) {
     );
 }
 
-export default async function SchedulePreview() {
-    const items = await getSchedulePreview();
+export default function SchedulePreview() {
+    const [items, setItems] = useState<ScheduleItem[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        async function load() {
+            const { data } = await supabase
+                .from("schedule")
+                .select("*")
+                .eq("show_in_preview", true)
+                .order("sort_order", { ascending: true });
+            if (!cancelled) {
+                setItems(data ?? []);
+                setLoading(false);
+            }
+        }
+
+        load();
+        return () => { cancelled = true; };
+    }, []);
+
+    if (loading) {
+        return (
+            <div className="mt-6 grid gap-4 md:grid-cols-2">
+                {[...Array(6)].map((_, i) => (
+                    <div
+                        key={i}
+                        className="h-[72px] animate-pulse rounded-3xl border border-black/10 bg-white/75"
+                    />
+                ))}
+            </div>
+        );
+    }
 
     if (items.length === 0) {
-        return (
-            <p className="mt-6 text-center text-sm text-zinc-400">
-                No schedule items yet.
-            </p>
-        );
+        return <p className="mt-6 text-center text-sm text-zinc-400">No schedule items yet.</p>;
     }
 
     return (

@@ -90,7 +90,7 @@ export default function RsvpForm({ lockedSession }: Props) {
 
   // Sessions visible in the picker
   const visibleSessions = lockedSession
-    ? SESSION_OPTIONS
+    ? [lockedSession]
     : SESSION_OPTIONS.filter((s) => s !== "Session 1");
 
   async function loadSessionAvailability() {
@@ -154,7 +154,7 @@ export default function RsvpForm({ lockedSession }: Props) {
 
   function handleGuestsClick(n: number) {
     setGuests(n);
-    setAdults((prev) => Math.min(Math.max(prev, 1), n));
+    setAdults(n);
 
     if (!lockedSession) {
       const currentRemaining = sessionAvailability[selectedSession]?.remaining ?? 0;
@@ -279,35 +279,25 @@ export default function RsvpForm({ lockedSession }: Props) {
         <div>
           <label className="text-sm text-zinc-600">Session</label>
 
-          {lockedSession ? (
-            <div className="mt-2 rounded-2xl border border-zinc-200 bg-zinc-50 px-3.5 py-3 text-sm text-zinc-700">
-              {lockedSession} — {SESSION_TIME[lockedSession]}
-            </div>
-          ) : (
-            <select
-              className="mt-2 w-full rounded-2xl border border-zinc-200 bg-white px-3 py-3 text-sm disabled:bg-zinc-100"
-              value={selectedSession}
-              onChange={(e) => setSelectedSession(e.target.value as Session)}
-              disabled={loadingSessions}
-            >
-              {visibleSessions.map((session) => {
-                const info = sessionAvailability[session];
-                const remaining = info?.remaining ?? 0;
-                const disabled = remaining < guests;
+          <select
+            className="mt-2 w-full rounded-2xl border border-zinc-200 bg-white px-3 py-3 text-sm disabled:bg-zinc-100"
+            value={selectedSession}
+            onChange={(e) => setSelectedSession(e.target.value as Session)}
+            disabled={loadingSessions}
+          >
+            {visibleSessions.map((session) => {
+              const info = sessionAvailability[session];
+              const remaining = info?.remaining ?? 0;
+              const disabled = remaining < guests;
 
-                return (
-                  <option key={session} value={session} disabled={disabled}>
-                    {session} ({SESSION_TIME[session]}){" "}
-                    {loadingSessions
-                      ? ""
-                      : disabled
-                        ? "- Full"
-                        : `- ${remaining} left`}
-                  </option>
-                );
-              })}
-            </select>
-          )}
+              return (
+                <option key={session} value={session} disabled={disabled}>
+                  {session} ({SESSION_TIME[session]}){" "}
+                  {loadingSessions ? "" : disabled ? "- Full" : `- ${remaining} left`}
+                </option>
+              );
+            })}
+          </select>
 
           {!lockedSession && !loadingSessions && (
             <p className="mt-2 text-xs text-zinc-500">

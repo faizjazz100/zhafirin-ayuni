@@ -3,7 +3,7 @@ import Image from "next/image";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faWaze, faGoogle } from "@fortawesome/free-brands-svg-icons";
 import MessageCarouselSection from "./components/MessageCarouselSection";
-import SchedulePreviewWrapper from "./components/SchedulePreviewWrapper";
+import SchedulePreview from "./components/SchedulePreview";
 import DaysToGo from "./components/DaysToGo";
 import { MotionDiv, MotionSection } from "./components/HomeAnimations";
 
@@ -200,7 +200,7 @@ export default function Page() {
               subtitle="Full schedule is on the Schedule page."
               action={<PrimaryButton href="/schedule">View Full Schedule</PrimaryButton>}
             />
-            <SchedulePreviewWrapper />
+            <SchedulePreview />
           </Card>
         </MotionSection>
 

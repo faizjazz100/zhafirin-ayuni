@@ -72,7 +72,7 @@ export default function OurStoryPage() {
                                 Over time, casual hellos turned into conversations, then shared
                                 lunches, and eventually a steady friendship. They supported one
                                 another through work challenges and personal struggles, becoming a
-                                constant presence in each other`&apos;`s lives. Yet, quietly and unspoken,
+                                constant presence in each othes&apos;s lives. Yet, quietly and unspoken,
                                 one of them wished for something more. A love that felt close, but
                                 still just out of reach.
                             </p>
