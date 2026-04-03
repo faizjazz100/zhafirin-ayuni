@@ -222,15 +222,6 @@ export default function Navbar({
                                         Admin →
                                     </Link>
                                 )}
-                                {isAdmin && (
-                                    <Link
-                                        href="/adminv2"
-                                        onClick={close}
-                                        className="block text-sm font-semibold tracking-[0.22em] text-[#7A0022] transition hover:text-[#64001C]"
-                                    >
-                                        Adminv2 →
-                                    </Link>
-                                )}
                             </div>
                         </nav>
                     </div>

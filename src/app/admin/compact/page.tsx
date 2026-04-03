@@ -172,10 +172,10 @@ export default function CompactAdminPage() {
                     </div>
                     <div className="flex flex-wrap gap-2">
                         <Link
-                            href="/adminv2"
+                            href="/admin"
                             className="inline-flex items-center gap-1.5 rounded-full bg-[#7A0022] px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-[#64001C] transition"
                         >
-                            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
+                            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
                             Card View
                         </Link>
                         <button
@@ -487,7 +487,7 @@ function ConfirmModal({
             <div className="absolute inset-0 grid place-items-center px-5">
                 <div className="w-full max-w-sm rounded-[28px] border border-white/55 bg-white/90 p-7 shadow-[0_20px_70px_rgba(0,0,0,0.25)] backdrop-blur">
                     <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-50">
-                        <svg className="h-5 w-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                        <svg className="h-5 w-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
                     </div>
                     <p className="font-semibold text-zinc-900">{title}</p>
                     <p className="mt-1.5 text-sm leading-relaxed text-zinc-500">{description}</p>

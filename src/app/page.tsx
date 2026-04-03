@@ -1,11 +1,11 @@
-"use client";
-
 import Link from "next/link";
 import Image from "next/image";
-import { motion } from "framer-motion";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faWaze, faGoogle } from "@fortawesome/free-brands-svg-icons";
 import MessageCarouselSection from "./components/MessageCarouselSection";
+import SchedulePreviewWrapper from "./components/SchedulePreviewWrapper";
+import DaysToGo from "./components/DaysToGo";
+import { MotionDiv, MotionSection } from "./components/HomeAnimations";
 
 export default function Page() {
   // ---- DATA (edit freely) ----
@@ -29,7 +29,6 @@ export default function Page() {
     return digits;
   };
 
-  const daysToGo = useDaysToGo(DATE_TOP);
 
   return (
     <main className="min-h-screen bg-[#FBF7F2] text-zinc-900 selection:bg-[#7A0022]/15">
@@ -41,7 +40,7 @@ export default function Page() {
 
       {/* HERO IMAGE */}
       <section className="mx-auto max-w-5xl px-5 pt-6 sm:px-6 sm:pt-10">
-        <motion.div
+        <MotionDiv
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
@@ -50,7 +49,7 @@ export default function Page() {
           <div className="relative h-[350px] sm:h-[560px] md:h-[680px] overflow-hidden">
 
             {/* Slow subtle zoom */}
-            <motion.div
+            <MotionDiv
               initial={{ scale: 0.6 }}
               animate={{ scale: [0.6, 0.7] }}
               transition={{
@@ -68,7 +67,7 @@ export default function Page() {
                 priority
                 className="object-cover"
               />
-            </motion.div>
+            </MotionDiv>
 
             {/* Dark cinematic gradient */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-black/10" />
@@ -79,7 +78,7 @@ export default function Page() {
             {/* Subtle vignette */}
             <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,transparent_55%,rgba(0,0,0,0.35))]" />
           </div>
-        </motion.div>
+        </MotionDiv>
       </section>
 
       {/* FLORAL DIVIDER */}
@@ -107,7 +106,7 @@ export default function Page() {
           </p>
 
           <div className="mt-3 text-[12px] font-semibold uppercase tracking-[0.30em] text-zinc-600">
-            {daysToGo != null ? `${daysToGo} DAYS TO GO!` : ""}
+            <DaysToGo date={DATE_TOP} />
           </div>
 
           <div className="mt-8">
@@ -151,7 +150,7 @@ export default function Page() {
         </div>
 
         {/* OUR STORY */}
-        <motion.section
+        <MotionSection
           id="our-story"
           initial={{ opacity: 0, y: 10 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -183,10 +182,10 @@ export default function Page() {
               </Link>
             </div>
           </Card>
-        </motion.section>
+        </MotionSection>
 
         {/* DETAILS */}
-        <motion.section
+        <MotionSection
           id="details"
           initial={{ opacity: 0, y: 10 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -201,17 +200,9 @@ export default function Page() {
               subtitle="Full schedule is on the Schedule page."
               action={<PrimaryButton href="/schedule">View Full Schedule</PrimaryButton>}
             />
-            <div className="mt-6 grid gap-4 md:grid-cols-2">
-              <InfoCard time="3:00 PM" title="Arrival of Guests (Session 1)" />
-              <InfoCard time="3:30 PM" title="Groom & Bride Entrance" />
-              <InfoCard time="4:30 PM" title="Arrival of Guests (Session 2)" />
-              <InfoCard time="4:30 PM" title="Makan Beradab" />
-              <InfoCard time="5:30 PM" title="Arrival of Guests (Session 3)" />
-              <InfoCard time="5:45 PM" title="Cake Cutting" />
-              <InfoCard time="8:00 PM" title="End" />
-            </div>
+            <SchedulePreviewWrapper />
           </Card>
-        </motion.section>
+        </MotionSection>
 
         {/* VENUE */}
         <section id="venue" className="mt-10">
@@ -246,7 +237,7 @@ export default function Page() {
         </section>
 
         {/* CONTACT */}
-        <motion.section
+        <MotionSection
           id="contact"
           initial={{ opacity: 0, y: 10 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -309,24 +300,13 @@ export default function Page() {
               </Link>
             </div>
           </Card>
-        </motion.section>
+        </MotionSection>
 
         {/* FOOTER */}
         <footer className="mt-12 text-center text-sm text-zinc-600">
           © {new Date().getFullYear()} {COUPLE}
         </footer>
       </section>
-
-      {/* Typography helpers */}
-      <style jsx global>{`
-        .font-serif {
-          font-family: var(--font-serif), ui-serif, Georgia, serif;
-        }
-        .font-script {
-          font-family: ui-serif, "Snell Roundhand", "Apple Chancery",
-            "Brush Script MT", "Segoe Script", cursive;
-        }
-      `}</style>
     </main>
   );
 }
@@ -535,17 +515,4 @@ function InfoCard({
       </div>
     </div>
   );
-}
-
-function useDaysToGo(dateLabel: string) {
-  try {
-    const d = new Date(dateLabel);
-    if (Number.isNaN(d.getTime())) return null;
-    const now = new Date();
-    const diff = d.getTime() - now.getTime();
-    const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
-    return Math.max(days, 0);
-  } catch {
-    return null;
-  }
 }

@@ -29,3 +29,12 @@ body {
   background: rgba(122, 0, 34, 0.25);
   border-radius: 999px;
 }
+
+.font-serif {
+    font-family: var(--font-serif), ui-serif, Georgia, serif;
+}
+
+.font-script {
+    font-family: ui-serif, "Snell Roundhand", "Apple Chancery",
+        "Brush Script MT", "Segoe Script", cursive;
+}

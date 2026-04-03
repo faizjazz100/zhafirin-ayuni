@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import PageContainer from "@/src/app/components/PageContainer";
 
@@ -36,9 +37,27 @@ export default function OurStoryPage() {
                         <div className="mx-auto mt-6 h-px w-24 bg-black/10" />
                     </header>
 
+                    {/* Couple Photo */}
+                    <div className="mx-auto mt-8 max-w-lg">
+                        <div className="relative overflow-hidden rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)]">
+                            <Image
+                                src="/couple.jpeg"
+                                alt="Zhafirin & Ayuni"
+                                width={800}
+                                height={600}
+                                className="w-full object-cover"
+                                priority
+                            />
+                            {/* Subtle vignette overlay */}
+                            <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-inset ring-black/10" />
+                        </div>
+                        <p className="mt-2 text-center text-xs text-zinc-400 tracking-wide">
+                            Zhafirin & Ayuni
+                        </p>
+                    </div>
+
                     {/* Story body */}
                     <div className="mx-auto mt-8 max-w-3xl">
-                        {/* Highlight pull-quote style intro (no text changed, just styling) */}
                         <div className="mt-6 space-y-6 text-[15px] leading-relaxed text-zinc-700">
                             <p>
                                 They met two years ago on the same working pathway, where their daily
@@ -47,19 +66,17 @@ export default function OurStoryPage() {
                                 smiles, friendly acquaintances in a busy world.
                             </p>
 
-                            {/* subtle divider */}
                             <div className="h-px w-full bg-black/10" />
 
                             <p>
                                 Over time, casual hellos turned into conversations, then shared
                                 lunches, and eventually a steady friendship. They supported one
                                 another through work challenges and personal struggles, becoming a
-                                constant presence in each other’s lives. Yet, quietly and unspoken,
+                                constant presence in each other`&apos;`s lives. Yet, quietly and unspoken,
                                 one of them wished for something more. A love that felt close, but
                                 still just out of reach.
                             </p>
 
-                            {/* subtle divider */}
                             <div className="h-px w-full bg-black/10" />
 
                             <p>
