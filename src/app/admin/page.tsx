@@ -35,6 +35,8 @@ export default function AdminPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deletingIds, setDeletingIds] = useState<Record<string, boolean>>({});
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [savingField, setSavingField] = useState<Record<string, boolean>>({});
+  const [savedField, setSavedField] = useState<Record<string, boolean>>({});
 
   async function load() {
     setLoading(true);
@@ -42,9 +44,7 @@ export default function AdminPage() {
 
     let q = supabase
       .from("rsvps")
-      .select(
-        "id, full_name, phone, guests, adults, kids, session, guest_of, message, created_at"
-      );
+      .select("id, full_name, phone, guests, adults, kids, session, guest_of, message, created_at");
 
     if (sessionFilter !== "All") q = q.eq("session", sessionFilter);
     if (guestOfFilter !== "All") q = q.eq("guest_of", guestOfFilter);
@@ -70,80 +70,30 @@ export default function AdminPage() {
 
   const totals = useMemo(() => {
     const submissions = rows.length;
-    const totalGuests = rows.reduce(
-      (sum, r) => sum + (Number(r.guests) || 0),
-      0
-    );
-    const totalAdults = rows.reduce(
-      (sum, r) => sum + (Number(r.adults) || 0),
-      0
-    );
+    const totalGuests = rows.reduce((sum, r) => sum + (Number(r.guests) || 0), 0);
+    const totalAdults = rows.reduce((sum, r) => sum + (Number(r.adults) || 0), 0);
     const totalKids = rows.reduce((sum, r) => sum + (Number(r.kids) || 0), 0);
-    const session1 = rows
-      .filter((r) => r.session === "Session 1")
-      .reduce((sum, r) => sum + (Number(r.guests) || 0), 0);
-
-    const session2 = rows
-      .filter((r) => r.session === "Session 2")
-      .reduce((sum, r) => sum + (Number(r.guests) || 0), 0);
-
-    const session3 = rows
-      .filter((r) => r.session === "Session 3")
-      .reduce((sum, r) => sum + (Number(r.guests) || 0), 0);
-
-    const bride = rows
-      .filter((r) => r.guest_of === "Bride")
-      .reduce((sum, r) => sum + (Number(r.guests) || 0), 0);
-
-    const groom = rows
-      .filter((r) => r.guest_of === "Groom")
-      .reduce((sum, r) => sum + (Number(r.guests) || 0), 0);
-    return {
-      submissions,
-      totalGuests,
-      totalAdults,
-      totalKids,
-      session1,
-      session2,
-      session3,
-      bride,
-      groom,
-    };
+    const session1 = rows.filter((r) => r.session === "Session 1").reduce((sum, r) => sum + (Number(r.guests) || 0), 0);
+    const session2 = rows.filter((r) => r.session === "Session 2").reduce((sum, r) => sum + (Number(r.guests) || 0), 0);
+    const session3 = rows.filter((r) => r.session === "Session 3").reduce((sum, r) => sum + (Number(r.guests) || 0), 0);
+    const bride = rows.filter((r) => r.guest_of === "Bride").reduce((sum, r) => sum + (Number(r.guests) || 0), 0);
+    const groom = rows.filter((r) => r.guest_of === "Groom").reduce((sum, r) => sum + (Number(r.guests) || 0), 0);
+    return { submissions, totalGuests, totalAdults, totalKids, session1, session2, session3, bride, groom };
   }, [rows]);
 
   function exportCSV() {
-    const headers = [
-      "Full Name",
-      "Phone",
-      "Guests",
-      "Adults",
-      "Kids",
-      "Session",
-      "Guest Of",
-      "Submitted At",
-    ];
+    const headers = ["Full Name", "Phone", "Guests", "Adults", "Kids", "Session", "Guest Of", "Submitted At"];
     const lines = rows.map((r) => [
-      r.full_name ?? "",
-      r.phone ?? "",
-      String(r.guests ?? 0),
-      String(r.adults ?? 0),
-      String(r.kids ?? 0),
-      r.session ?? "",
-      r.guest_of ?? "",
+      r.full_name ?? "", r.phone ?? "", String(r.guests ?? 0), String(r.adults ?? 0),
+      String(r.kids ?? 0), r.session ?? "", r.guest_of ?? "",
       new Date(r.created_at).toLocaleString(),
     ]);
-    const csv = [headers, ...lines]
-      .map((row) => row.map(csvEscape).join(","))
-      .join("\n");
+    const csv = [headers, ...lines].map((row) => row.map(csvEscape).join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `rsvps_${sessionFilter
-      .toLowerCase()
-      .replace(/\s+/g, "_")}_${guestOfFilter
-        .toLowerCase()
-        .replace(/\s+/g, "_")}_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.download = `rsvps_${new Date().toISOString().slice(0, 10)}.csv`;
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -163,11 +113,28 @@ export default function AdminPage() {
     } else {
       await load();
     }
-    setDeletingIds((m) => {
-      const copy = { ...m };
-      delete copy[id];
-      return copy;
-    });
+    setDeletingIds((m) => { const copy = { ...m }; delete copy[id]; return copy; });
+  }
+
+  // Auto-save immediately on dropdown change, optimistic update
+  async function updateField(id: string, field: "session" | "guest_of", value: Session | GuestOf) {
+    const key = `${id}_${field}`;
+    setSavingField((m) => ({ ...m, [key]: true }));
+
+    // Optimistic update so badge refreshes instantly
+    setRows((prev) => prev.map((r) => r.id === id ? { ...r, [field]: value } : r));
+
+    const { error } = await supabase.from("rsvps").update({ [field]: value }).eq("id", id);
+
+    if (error) {
+      setError(`Failed to update: ${error.message}`);
+      await load(); // restore on failure
+    } else {
+      setSavedField((m) => ({ ...m, [key]: true }));
+      setTimeout(() => setSavedField((m) => { const c = { ...m }; delete c[key]; return c; }), 1500);
+    }
+
+    setSavingField((m) => { const copy = { ...m }; delete copy[key]; return copy; });
   }
 
   const sessionColor: Record<string, string> = {
@@ -183,7 +150,6 @@ export default function AdminPage() {
 
   return (
     <main className="min-h-screen bg-[#FBF7F2] text-zinc-800">
-      {/* Background layer */}
       <div className="pointer-events-none fixed inset-0 -z-10">
         <div className="absolute inset-0 bg-[radial-gradient(1200px_800px_at_10%_10%,rgba(122,0,34,0.08),transparent_60%),radial-gradient(900px_700px_at_90%_20%,rgba(0,0,0,0.05),transparent_55%)]" />
         <div className="absolute inset-0 bg-gradient-to-b from-white/70 via-[#FBF7F2]/55 to-white/80" />
@@ -194,58 +160,34 @@ export default function AdminPage() {
         {/* ── Header ── */}
         <div className="mb-8 flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.34em] text-[#7A0022]/80">
-              Admin
-            </p>
-            <h1 className="mt-1 font-serif text-3xl font-semibold text-zinc-900 sm:text-4xl">
-              RSVP Dashboard
-            </h1>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.34em] text-[#7A0022]/80">Admin</p>
+            <h1 className="mt-1 font-serif text-3xl font-semibold text-zinc-900 sm:text-4xl">RSVP Dashboard</h1>
             <p className="mt-1 text-sm text-zinc-500">
               {loading ? "Loading…" : `${totals.submissions} submission${totals.submissions !== 1 ? "s" : ""} · ${totals.totalGuests} guests total`}
             </p>
           </div>
-
           <div className="flex flex-wrap gap-2">
-            <Link
-              href="/admin/messages"
-              className="inline-flex items-center gap-1.5 rounded-full bg-[#7A0022] px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-[#64001C] transition"
-            >
+            <Link href="/admin/messages" className="inline-flex items-center gap-1.5 rounded-full bg-[#7A0022] px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-[#64001C] transition">
               <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M21 16V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2h11l4 4-1-4h1a2 2 0 002-2z" /></svg>
               Message
             </Link>
-            <Link
-              href="/admin/sessions"
-              className="inline-flex items-center gap-1.5 rounded-full bg-[#7A0022] px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-[#64001C] transition"
-            >
+            <Link href="/admin/sessions" className="inline-flex items-center gap-1.5 rounded-full bg-[#7A0022] px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-[#64001C] transition">
               <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
               Session
             </Link>
-            <Link
-              href="/admin/schedule"
-              className="inline-flex items-center gap-1.5 rounded-full bg-[#7A0022] px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-[#64001C] transition"
-            >
+            <Link href="/admin/schedule" className="inline-flex items-center gap-1.5 rounded-full bg-[#7A0022] px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-[#64001C] transition">
               <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
               Schedule
             </Link>
-            <Link
-              href="/admin/compact"
-              className="inline-flex items-center gap-1.5 rounded-full bg-[#7A0022] px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-[#64001C] transition"
-            >
-              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+            <Link href="/admin/compact" className="inline-flex items-center gap-1.5 rounded-full bg-[#7A0022] px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-[#64001C] transition">
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
               Compact
             </Link>
-            <button
-              onClick={exportCSV}
-              disabled={rows.length === 0}
-              className="inline-flex items-center gap-1.5 rounded-full border border-black/10 bg-white/85 px-4 py-2.5 text-sm text-zinc-800 hover:bg-white disabled:opacity-40 transition"
-            >
+            <button onClick={exportCSV} disabled={rows.length === 0} className="inline-flex items-center gap-1.5 rounded-full border border-black/10 bg-white/85 px-4 py-2.5 text-sm text-zinc-800 hover:bg-white disabled:opacity-40 transition">
               <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
               ExportCSV
             </button>
-            <button
-              onClick={load}
-              className="inline-flex items-center gap-1.5 rounded-full border border-black/10 bg-white/85 px-4 py-2.5 text-sm text-zinc-800 hover:bg-white transition"
-            >
+            <button onClick={load} className="inline-flex items-center gap-1.5 rounded-full border border-black/10 bg-white/85 px-4 py-2.5 text-sm text-zinc-800 hover:bg-white transition">
               <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
               Refresh
             </button>
@@ -269,36 +211,21 @@ export default function AdminPage() {
         <div className="mb-6 flex flex-wrap items-center gap-2">
           <span className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 mr-1">Filter</span>
           {(["All", "Session 1", "Session 2", "Session 3"] as SessionFilter[]).map((s) => (
-            <button
-              key={s}
-              onClick={() => setSessionFilter(s)}
-              className={`rounded-full border px-3.5 py-1.5 text-xs font-medium transition ${sessionFilter === s
-                ? "border-[#7A0022] bg-[#7A0022] text-white"
-                : "border-black/10 bg-white/70 text-zinc-600 hover:bg-white"
-                }`}
-            >
+            <button key={s} onClick={() => setSessionFilter(s)}
+              className={`rounded-full border px-3.5 py-1.5 text-xs font-medium transition ${sessionFilter === s ? "border-[#7A0022] bg-[#7A0022] text-white" : "border-black/10 bg-white/70 text-zinc-600 hover:bg-white"}`}>
               {s === "All" ? "All Sessions" : s}
             </button>
           ))}
           <div className="h-4 w-px bg-black/10 mx-1" />
           {(["All", "Bride", "Groom"] as GuestOfFilter[]).map((g) => (
-            <button
-              key={g}
-              onClick={() => setGuestOfFilter(g)}
-              className={`rounded-full border px-3.5 py-1.5 text-xs font-medium transition ${guestOfFilter === g
-                ? "border-[#7A0022] bg-[#7A0022] text-white"
-                : "border-black/10 bg-white/70 text-zinc-600 hover:bg-white"
-                }`}
-            >
+            <button key={g} onClick={() => setGuestOfFilter(g)}
+              className={`rounded-full border px-3.5 py-1.5 text-xs font-medium transition ${guestOfFilter === g ? "border-[#7A0022] bg-[#7A0022] text-white" : "border-black/10 bg-white/70 text-zinc-600 hover:bg-white"}`}>
               {g === "All" ? "Bride + Groom" : g}
             </button>
           ))}
           <div className="ml-auto">
-            <select
-              value={sort}
-              onChange={(e) => setSort(e.target.value as Sort)}
-              className="rounded-full border border-black/10 bg-white/85 px-4 py-2 text-xs text-zinc-700 hover:bg-white"
-            >
+            <select value={sort} onChange={(e) => setSort(e.target.value as Sort)}
+              className="rounded-full border border-black/10 bg-white/85 px-4 py-2 text-xs text-zinc-700 hover:bg-white">
               <option value="newest">Newest first</option>
               <option value="oldest">Oldest first</option>
               <option value="name_az">Name (A–Z)</option>
@@ -308,24 +235,18 @@ export default function AdminPage() {
 
         {/* ── Error ── */}
         {error && (
-          <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-            {error}
-          </div>
+          <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>
         )}
 
         {/* ── Cards ── */}
         {loading ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {[...Array(6)].map((_, i) => (
-              <div
-                key={i}
-                className="h-48 animate-pulse rounded-[24px] border border-black/5 bg-white/60"
-              />
+              <div key={i} className="h-48 animate-pulse rounded-[24px] border border-black/5 bg-white/60" />
             ))}
           </div>
         ) : rows.length === 0 ? (
           <div className="flex flex-col items-center justify-center rounded-[28px] border border-black/5 bg-white/60 py-20 text-center">
-            <svg className="mb-3 h-10 w-10 text-zinc-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
             <p className="text-sm font-medium text-zinc-400">No submissions found</p>
             <p className="mt-1 text-xs text-zinc-300">Try adjusting your filters</p>
           </div>
@@ -334,11 +255,9 @@ export default function AdminPage() {
             {rows.map((r, idx) => {
               const isExpanded = expandedId === r.id;
               const initials = (r.full_name ?? "?")
-                .split(" ")
-                .slice(0, 2)
-                .map((w) => w[0])
-                .join("")
-                .toUpperCase();
+                .split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase();
+              const sessionKey = `${r.id}_session`;
+              const guestOfKey = `${r.id}_guest_of`;
 
               return (
                 <div
@@ -347,97 +266,124 @@ export default function AdminPage() {
                   style={{ animationDelay: `${idx * 30}ms` }}
                 >
                   {/* Top accent bar */}
-                  <div
-                    className={`h-1 w-full ${r.session === "Session 1"
-                      ? "bg-gradient-to-r from-amber-300 to-amber-400"
-                      : r.session === "Session 2"
-                        ? "bg-gradient-to-r from-sky-300 to-sky-400"
-                        : r.session === "Session 3"
-                          ? "bg-gradient-to-r from-violet-300 to-violet-400"
-                          : "bg-gradient-to-r from-zinc-200 to-zinc-300"
-                      }`}
-                  />
+                  <div className={`h-1 w-full ${r.session === "Session 1" ? "bg-gradient-to-r from-amber-300 to-amber-400" : r.session === "Session 2" ? "bg-gradient-to-r from-sky-300 to-sky-400" : r.session === "Session 3" ? "bg-gradient-to-r from-violet-300 to-violet-400" : "bg-gradient-to-r from-zinc-200 to-zinc-300"}`} />
 
-                  <div className="flex flex-col gap-4 p-5">
-                    {/* Avatar + name row */}
-                    <div className="flex items-start gap-3">
-                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#7A0022]/10 text-sm font-semibold text-[#7A0022]">
-                        {initials}
+                  {/* Clickable card body */}
+                  <button onClick={() => setExpandedId(isExpanded ? null : r.id)} className="w-full text-left">
+                    <div className="flex flex-col gap-4 p-5">
+                      {/* Avatar + name row */}
+                      <div className="flex items-start gap-3">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#7A0022]/10 text-sm font-semibold text-[#7A0022]">
+                          {initials}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate font-semibold text-zinc-900">{r.full_name || "—"}</p>
+                          <p className="mt-0.5 text-xs text-zinc-400">{r.phone || "No phone"}</p>
+                        </div>
+                        <div className="flex flex-col gap-1.5 items-end shrink-0">
+                          {r.session && (
+                            <span className={`inline-flex rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${sessionColor[r.session] ?? "bg-zinc-50 text-zinc-600 border-zinc-200"}`}>
+                              {r.session}
+                            </span>
+                          )}
+                          {r.guest_of && (
+                            <span className={`inline-flex rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${guestOfColor[r.guest_of] ?? "bg-zinc-50 text-zinc-600 border-zinc-200"}`}>
+                              {r.guest_of}
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate font-semibold text-zinc-900">
-                          {r.full_name || "—"}
-                        </p>
-                        <p className="mt-0.5 text-xs text-zinc-400">
-                          {r.phone || "No phone"}
-                        </p>
+
+                      {/* Guest count pills */}
+                      <div className="flex gap-2">
+                        <GuestPill icon="👥" label="Total" value={r.guests ?? 0} />
+                        <GuestPill icon="🧑" label="Adults" value={r.adults ?? 0} />
+                        <GuestPill icon="🧒" label="Kids" value={r.kids ?? 0} />
                       </div>
-                      <div className="flex flex-col gap-1.5 items-end shrink-0">
-                        {r.session && (
-                          <span
-                            className={`inline-flex rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${sessionColor[r.session] ?? "bg-zinc-50 text-zinc-600 border-zinc-200"
-                              }`}
-                          >
-                            {r.session}
+
+                      {/* Message preview */}
+                      {r.message && r.message.trim().length > 0 && (
+                        <div className="flex items-center gap-2">
+                          <svg className="h-3.5 w-3.5 shrink-0 text-zinc-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M21 16V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2h11l4 4-1-4h1a2 2 0 002-2z" />
+                          </svg>
+                          <p className="truncate text-xs italic text-zinc-400">&quot;{r.message.trim()}&quot;</p>
+                        </div>
+                      )}
+
+                      {/* Date + chevron */}
+                      <div className="flex items-center justify-between">
+                        <p className="text-[11px] text-zinc-400">
+                          Submitted{" "}
+                          <span className="font-medium text-zinc-500">
+                            {new Date(r.created_at).toLocaleString("en-MY", {
+                              day: "numeric", month: "short", year: "numeric",
+                              hour: "2-digit", minute: "2-digit",
+                            })}
                           </span>
-                        )}
-                        {r.guest_of && (
-                          <span
-                            className={`inline-flex rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${guestOfColor[r.guest_of] ?? "bg-zinc-50 text-zinc-600 border-zinc-200"
-                              }`}
-                          >
-                            {r.guest_of}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Guest count pills */}
-                    <div className="flex gap-2">
-                      <GuestPill icon="👥" label="Total" value={r.guests ?? 0} />
-                      <GuestPill icon="🧑" label="Adults" value={r.adults ?? 0} />
-                      <GuestPill icon="🧒" label="Kids" value={r.kids ?? 0} />
-                    </div>
-
-                    {/* Message preview */}
-                    {r.message && r.message.trim().length > 0 && (
-                      <div className="flex items-center gap-2">
-                        <svg className="h-3.5 w-3.5 shrink-0 text-zinc-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M21 16V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2h11l4 4-1-4h1a2 2 0 002-2z" />
+                        </p>
+                        <svg className={`h-3.5 w-3.5 text-zinc-300 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                         </svg>
-                        <p className="truncate text-xs italic text-zinc-400">&quot;{r.message.trim()}&quot;</p>
                       </div>
-                    )}
+                    </div>
+                  </button>
 
-                    {/* Submitted date */}
-                    <p className="text-[11px] text-zinc-400">
-                      Submitted{" "}
-                      <span className="font-medium text-zinc-500">
-                        {new Date(r.created_at).toLocaleString("en-MY", {
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </span>
-                    </p>
-                  </div>
+                  {/* ── Expanded panel ── */}
+                  {isExpanded && (
+                    <div className="border-t border-black/5 bg-zinc-50/70 px-5 py-4 flex flex-col gap-3">
 
-                  {/* Footer: delete */}
-                  <div className="mt-auto border-t border-black/5 bg-white/50 px-5 py-3 flex items-center justify-between">
-                    <span className="text-[10px] font-mono text-zinc-300 select-none">
-                      #{r.id.slice(0, 8)}
-                    </span>
-                    <button
-                      onClick={() => setDeleteId(r.id)}
-                      disabled={!!deletingIds[r.id]}
-                      className="inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-3 py-1.5 text-[11px] font-semibold text-red-600 hover:bg-red-100 disabled:opacity-40 transition"
-                    >
-                      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                      {deletingIds[r.id] ? "Deleting…" : "Delete"}
-                    </button>
-                  </div>
+                      {/* Session dropdown */}
+                      <div>
+                        <div className="mb-1 flex items-center gap-2">
+                          <label className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400">Session</label>
+                          {savingField[sessionKey] && <span className="text-[10px] text-zinc-400">Saving…</span>}
+                          {savedField[sessionKey] && <span className="text-[10px] text-emerald-600">✓ Saved</span>}
+                        </div>
+                        <select
+                          value={r.session ?? ""}
+                          disabled={savingField[sessionKey]}
+                          onChange={(e) => updateField(r.id, "session", e.target.value as Session)}
+                          className="w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-sm text-zinc-800 outline-none focus:border-zinc-300 disabled:opacity-60 transition"
+                        >
+                          <option value="Session 1">Session 1</option>
+                          <option value="Session 2">Session 2</option>
+                          <option value="Session 3">Session 3</option>
+                        </select>
+                      </div>
+
+                      {/* Guest of dropdown */}
+                      <div>
+                        <div className="mb-1 flex items-center gap-2">
+                          <label className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400">Guest of</label>
+                          {savingField[guestOfKey] && <span className="text-[10px] text-zinc-400">Saving…</span>}
+                          {savedField[guestOfKey] && <span className="text-[10px] text-emerald-600">✓ Saved</span>}
+                        </div>
+                        <select
+                          value={r.guest_of ?? ""}
+                          disabled={savingField[guestOfKey]}
+                          onChange={(e) => updateField(r.id, "guest_of", e.target.value as GuestOf)}
+                          className="w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-sm text-zinc-800 outline-none focus:border-zinc-300 disabled:opacity-60 transition"
+                        >
+                          <option value="Bride">Bride</option>
+                          <option value="Groom">Groom</option>
+                        </select>
+                      </div>
+
+                      {/* Delete + ID row */}
+                      <div className="flex items-center justify-between pt-1">
+                        <p className="text-[10px] font-mono text-zinc-300 select-none">#{r.id.slice(0, 8)}</p>
+                        <button
+                          onClick={() => setDeleteId(r.id)}
+                          disabled={!!deletingIds[r.id]}
+                          className="inline-flex items-center gap-1 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-100 disabled:opacity-40 transition"
+                        >
+                          <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                          {deletingIds[r.id] ? "Deleting…" : "Delete"}
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -460,17 +406,7 @@ export default function AdminPage() {
   );
 }
 
-/* ── Sub-components ── */
-
-function GuestPill({
-  icon,
-  label,
-  value,
-}: {
-  icon: string;
-  label: string;
-  value: number;
-}) {
+function GuestPill({ icon, label, value }: { icon: string; label: string; value: number }) {
   return (
     <div className="flex flex-1 items-center gap-1.5 rounded-xl border border-black/5 bg-zinc-50 px-2.5 py-2">
       <span className="text-base leading-none">{icon}</span>
@@ -482,61 +418,25 @@ function GuestPill({
   );
 }
 
-function StatCard({
-  label,
-  value,
-  accent,
-  dot,
-}: {
-  label: string;
-  value: number;
-  accent?: boolean;
-  dot?: string;
-}) {
+function StatCard({ label, value, accent, dot }: { label: string; value: number; accent?: boolean; dot?: string }) {
   return (
-    <div
-      className={`rounded-[20px] border p-4 shadow-[0_4px_20px_rgba(0,0,0,0.05)] ${accent
-        ? "border-[#7A0022]/20 bg-[#7A0022] text-white"
-        : "border-black/8 bg-white/75 text-zinc-900"
-        }`}
-    >
+    <div className={`rounded-[20px] border p-4 shadow-[0_4px_20px_rgba(0,0,0,0.05)] ${accent ? "border-[#7A0022]/20 bg-[#7A0022] text-white" : "border-black/8 bg-white/75 text-zinc-900"}`}>
       <div className="flex items-center gap-1.5">
         {dot && <span className={`h-2 w-2 rounded-full ${dot}`} />}
-        <p
-          className={`text-[10px] font-semibold uppercase tracking-widest ${accent ? "text-white/70" : "text-zinc-400"
-            }`}
-        >
-          {label}
-        </p>
+        <p className={`text-[10px] font-semibold uppercase tracking-widest ${accent ? "text-white/70" : "text-zinc-400"}`}>{label}</p>
       </div>
-      <p className={`mt-1 text-2xl font-bold ${accent ? "text-white" : "text-zinc-900"}`}>
-        {value}
-      </p>
+      <p className={`mt-1 text-2xl font-bold ${accent ? "text-white" : "text-zinc-900"}`}>{value}</p>
     </div>
   );
 }
 
-function ConfirmModal({
-  title,
-  description,
-  confirmText,
-  cancelText,
-  onConfirm,
-  onCancel,
-}: {
-  title: string;
-  description: string;
-  confirmText: string;
-  cancelText: string;
-  onConfirm: () => void;
-  onCancel: () => void;
+function ConfirmModal({ title, description, confirmText, cancelText, onConfirm, onCancel }: {
+  title: string; description: string; confirmText: string; cancelText: string;
+  onConfirm: () => void; onCancel: () => void;
 }) {
   return (
     <div className="fixed inset-0 z-50">
-      <div
-        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-        onClick={onCancel}
-      />
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onCancel} />
       <div className="absolute inset-0 grid place-items-center px-5">
         <div className="w-full max-w-sm rounded-[28px] border border-white/55 bg-white/90 p-7 shadow-[0_20px_70px_rgba(0,0,0,0.25)] backdrop-blur">
           <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-50">
@@ -545,18 +445,8 @@ function ConfirmModal({
           <p className="font-semibold text-zinc-900">{title}</p>
           <p className="mt-1.5 text-sm leading-relaxed text-zinc-500">{description}</p>
           <div className="mt-6 flex gap-3">
-            <button
-              onClick={onCancel}
-              className="flex-1 rounded-full border border-black/10 bg-white px-4 py-2.5 text-sm text-zinc-700 hover:bg-zinc-50"
-            >
-              {cancelText}
-            </button>
-            <button
-              onClick={onConfirm}
-              className="flex-1 rounded-full bg-red-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-red-700"
-            >
-              {confirmText}
-            </button>
+            <button onClick={onCancel} className="flex-1 rounded-full border border-black/10 bg-white px-4 py-2.5 text-sm text-zinc-700 hover:bg-zinc-50">{cancelText}</button>
+            <button onClick={onConfirm} className="flex-1 rounded-full bg-red-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-red-700">{confirmText}</button>
           </div>
         </div>
       </div>
