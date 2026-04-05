@@ -6,6 +6,7 @@ import MessageCarouselSection from "./components/MessageCarouselSection";
 import SchedulePreview from "./components/SchedulePreview";
 import DaysToGo from "./components/DaysToGo";
 import { MotionDiv, MotionSection } from "./components/HomeAnimations";
+import HomeContactCards from "./components/HomeContactCards";
 
 export default function Page() {
   // ---- DATA (edit freely) ----
@@ -15,19 +16,6 @@ export default function Page() {
   const SUBLINE = "Hacienda A-Park, Puchong, Selangor";
   const RSVP_DEADLINE = "18 April 2026";
 
-  const CONTACTS = [
-    { name: "Mai (Groom’s)", phone: "013-355 2455" },
-    { name: "Elin (Groom’s)", phone: "019-226 6996" },
-    { name: "Darwish (Bride’s)", phone: "012-846 2690" },
-    { name: "En Firdaus (Bride’s)", phone: "019-282 7625" },
-  ];
-
-  const toMYWa = (phone: string) => {
-    const digits = phone.replace(/\D/g, "");
-    if (digits.startsWith("60")) return digits;
-    if (digits.startsWith("0")) return "6" + digits;
-    return digits;
-  };
 
 
   return (
@@ -260,36 +248,7 @@ export default function Page() {
               }
             />
 
-            <div className="mt-6 grid gap-4 sm:grid-cols-2">
-              {CONTACTS.map((c) => (
-                <div
-                  key={c.name}
-                  className="rounded-3xl border border-black/10 bg-white/75 p-6 shadow-[0_10px_30px_rgba(0,0,0,0.06)]"
-                >
-                  <p className="text-xs font-semibold uppercase tracking-[0.30em] text-[#7A0022]/80">
-                    {c.name}
-                  </p>
-                  <p className="mt-2 text-lg font-semibold text-zinc-900">{c.phone}</p>
-
-                  <div className="mt-4 flex gap-3">
-                    <a
-                      className="inline-flex flex-1 items-center justify-center rounded-2xl bg-[#7A0022] px-4 py-2 text-sm text-white hover:opacity-90"
-                      href={`tel:${c.phone.replace(/\D/g, "")}`}
-                    >
-                      Call
-                    </a>
-                    <a
-                      className="inline-flex flex-1 items-center justify-center rounded-2xl border border-black/10 bg-white/90 px-4 py-2 text-sm text-zinc-900 hover:bg-white"
-                      href={`https://wa.me/${toMYWa(c.phone)}`}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      WhatsApp
-                    </a>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <HomeContactCards />
 
             <div className="mt-6 sm:hidden">
               <Link

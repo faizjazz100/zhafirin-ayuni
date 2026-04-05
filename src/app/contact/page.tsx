@@ -1,18 +1,45 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import PageContainer from "@/src/app/components/PageContainer";
+import { supabase } from "@/lib/supabase";
+
+type ContactItem = {
+    name: string;
+    phoneDisplay: string;
+    phoneE164: string;
+};
+
+const FALLBACK_CONTACTS: ContactItem[] = [
+    { name: "Mai (Groom's)", phoneDisplay: "013-355 2455", phoneE164: "60133552455" },
+    { name: "Elin (Groom's)", phoneDisplay: "019-226 6996", phoneE164: "60192266996" },
+    { name: "Darwish (Bride's)", phoneDisplay: "012-846 2690", phoneE164: "60128462690" },
+    { name: "En Firdaus (Bride's)", phoneDisplay: "019-282 7625", phoneE164: "60192827625" },
+];
 
 export default function ContactPage() {
     const COUPLE = "Zhafirin & Ayuni";
+    const [contacts, setContacts] = useState<ContactItem[]>(FALLBACK_CONTACTS);
 
-    const CONTACTS = [
-        { name: "Mai (Groom’s)", phoneDisplay: "013-355 2455", phoneE164: "60133552455" },
-        { name: "Elin (Groom’s)", phoneDisplay: "019-226 6996", phoneE164: "60192266996" },
-        { name: "Darwish (Bride’s)", phoneDisplay: "012-846 2690", phoneE164: "60128462690" },
-        { name: "En Firdaus (Bride’s)", phoneDisplay: "019-282 7625", phoneE164: "60192827625" },
-    ];
+    useEffect(() => {
+        supabase
+            .from("contacts")
+            .select("name, phone_display, phone_e164")
+            .order("display_order", { ascending: true })
+            .then(({ data }) => {
+                if (data && data.length > 0) {
+                    setContacts(
+                        data.map((r) => ({
+                            name: r.name,
+                            phoneDisplay: r.phone_display,
+                            phoneE164: r.phone_e164,
+                        }))
+                    );
+                }
+            });
+    }, []);
 
     return (
         <main className="min-h-screen bg-[#FBF7F2] text-zinc-800">
@@ -43,7 +70,7 @@ export default function ContactPage() {
 
                     {/* Contact cards */}
                     <div className="mt-8 grid gap-4 sm:grid-cols-2">
-                        {CONTACTS.map((c) => (
+                        {contacts.map((c) => (
                             <div
                                 key={c.name}
                                 className="rounded-3xl border border-black/10 bg-white/75 p-6 shadow-[0_10px_30px_rgba(0,0,0,0.06)]"
