@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 type SessionName = "Session 1" | "Session 2" | "Session 3";
 
@@ -119,6 +121,125 @@ export default function AdminSessionsPage() {
     function closeDrawer() {
         setDrawerSession(null);
         setGuestList([]);
+    }
+
+    async function exportSessionPDF(sessionName: SessionName) {
+        const { data, error } = await supabase
+            .from("rsvps")
+            .select("id, full_name, phone, guests, adults, kids, guest_of, created_at")
+            .eq("session", sessionName)
+            .order("created_at", { ascending: false });
+        if (error || !data) return;
+        const guests = data as GuestRow[];
+
+        const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+        const pageW = doc.internal.pageSize.getWidth();
+        const margin = 10;
+
+        // Header band
+        doc.setFillColor(122, 0, 34);
+        doc.rect(0, 0, pageW, 26, "F");
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(16);
+        doc.setTextColor(255, 255, 255);
+        doc.text(sessionName, margin, 11);
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(8);
+        doc.setTextColor(255, 200, 215);
+        doc.text("Guest List · Zhafirin & Ayuni", margin, 18);
+        doc.setFontSize(7);
+        doc.text(
+            new Date().toLocaleString("en-MY", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }),
+            pageW - margin, 18, { align: "right" }
+        );
+
+        // Summary blocks
+        const total = guests.reduce((s, g) => s + (Number(g.guests) || 0), 0);
+        const adults = guests.reduce((s, g) => s + (Number(g.adults) || 0), 0);
+        const kids = guests.reduce((s, g) => s + (Number(g.kids) || 0), 0);
+        const bride = guests.filter((g) => g.guest_of === "Bride").reduce((s, g) => s + (Number(g.guests) || 0), 0);
+        const groom = guests.filter((g) => g.guest_of === "Groom").reduce((s, g) => s + (Number(g.guests) || 0), 0);
+        const summaryItems = [
+            { label: "Submissions", value: String(guests.length), accent: true },
+            { label: "Total Guests", value: String(total), accent: true },
+            { label: "Adults", value: String(adults), accent: false },
+            { label: "Kids", value: String(kids), accent: false },
+            { label: "Bride Side", value: String(bride), accent: false },
+        ];
+        const blockW = (pageW - margin * 2) / summaryItems.length;
+        const blockH = 14;
+        const summaryY = 30;
+        summaryItems.forEach((item, ci) => {
+            const bx = margin + ci * blockW;
+            if (item.accent) { doc.setFillColor(122, 0, 34); doc.setTextColor(255, 255, 255); }
+            else { doc.setFillColor(250, 245, 247); doc.setTextColor(50, 40, 45); }
+            doc.roundedRect(bx, summaryY, blockW - 1, blockH, 2, 2, "F");
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(13);
+            doc.text(item.value, bx + blockW / 2 - 0.5, summaryY + 7, { align: "center" });
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(6.5);
+            if (item.accent) doc.setTextColor(255, 200, 215); else doc.setTextColor(140, 100, 115);
+            doc.text(item.label.toUpperCase(), bx + blockW / 2 - 0.5, summaryY + 11.5, { align: "center" });
+        });
+        // Groom block on second row
+        const groomBx = margin + 4 * blockW;
+        doc.setFillColor(250, 245, 247); doc.setTextColor(50, 40, 45);
+        doc.roundedRect(groomBx, summaryY, blockW - 1, blockH, 2, 2, "F");
+        doc.setFont("helvetica", "bold"); doc.setFontSize(13);
+        doc.setTextColor(50, 40, 45);
+        doc.text(String(groom), groomBx + blockW / 2 - 0.5, summaryY + 7, { align: "center" });
+        doc.setFont("helvetica", "normal"); doc.setFontSize(6.5); doc.setTextColor(140, 100, 115);
+        doc.text("GROOM SIDE", groomBx + blockW / 2 - 0.5, summaryY + 11.5, { align: "center" });
+
+        // Table
+        autoTable(doc, {
+            startY: summaryY + blockH + 5,
+            head: [["#", "Name & Phone", "Side", "Guests"]],
+            body: guests.map((g, i) => [
+                String(i + 1),
+                `${g.full_name ?? "—"}\n${g.phone ?? "No phone"}`,
+                g.guest_of ?? "—",
+                `Total: ${g.guests ?? 0}\nAdults: ${g.adults ?? 0}  Kids: ${g.kids ?? 0}`,
+            ]),
+            styles: {
+                fontSize: 9.5,
+                cellPadding: { top: 4, right: 5, bottom: 4, left: 5 },
+                lineColor: [230, 218, 222],
+                lineWidth: 0.2,
+                textColor: [50, 40, 45],
+                overflow: "linebreak",
+                valign: "middle",
+            },
+            headStyles: {
+                fillColor: [122, 0, 34],
+                textColor: [255, 255, 255],
+                fontStyle: "bold",
+                fontSize: 8.5,
+                cellPadding: { top: 5, right: 5, bottom: 5, left: 5 },
+            },
+            alternateRowStyles: { fillColor: [253, 249, 247] },
+            columnStyles: {
+                0: { halign: "center", cellWidth: 10, fontStyle: "bold" },
+                1: { cellWidth: 90 },
+                2: { cellWidth: 40 },
+                3: { cellWidth: 50, halign: "center" },
+            },
+            margin: { left: margin, right: margin },
+        });
+
+        const pageCount = (doc.internal as unknown as { getNumberOfPages: () => number }).getNumberOfPages();
+        for (let p = 1; p <= pageCount; p++) {
+            doc.setPage(p);
+            const ph = doc.internal.pageSize.getHeight();
+            doc.setFillColor(245, 240, 242);
+            doc.rect(0, ph - 9, pageW, 9, "F");
+            doc.setFont("helvetica", "normal"); doc.setFontSize(7); doc.setTextColor(150, 110, 120);
+            doc.text(`Zhafirin & Ayuni · ${sessionName} Guest List`, margin, ph - 3);
+            doc.text(`Page ${p} of ${pageCount}`, pageW - margin, ph - 3, { align: "right" });
+        }
+
+        doc.save(`${sessionName.replace(" ", "_").toLowerCase()}_guests_${new Date().toISOString().slice(0, 10)}.pdf`);
     }
 
     const usageMap = useMemo(() => {
@@ -268,16 +389,25 @@ export default function AdminSessionsPage() {
                                                 <InfoTile label="Remaining" value={remaining} highlight={remaining === 0} />
                                             </div>
 
-                                            {/* View Guest List button */}
-                                            <button
-                                                onClick={() => void openDrawer(row.session_name)}
-                                                className="flex w-full items-center justify-center gap-2 rounded-xl border border-black/8 bg-zinc-50 px-4 py-2.5 text-sm font-medium text-zinc-600 hover:bg-zinc-100 transition"
-                                            >
-                                                <svg className="h-4 w-4 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                </svg>
-                                                View Guest List
-                                            </button>
+                                            {/* View Guest List + PDF buttons */}
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={() => void openDrawer(row.session_name)}
+                                                    className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-black/8 bg-zinc-50 px-4 py-2.5 text-sm font-medium text-zinc-600 hover:bg-zinc-100 transition"
+                                                >
+                                                    <svg className="h-4 w-4 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                    </svg>
+                                                    View Guest List
+                                                </button>
+                                                <button
+                                                    onClick={() => void exportSessionPDF(row.session_name)}
+                                                    title={`Export ${row.session_name} PDF`}
+                                                    className="flex items-center justify-center rounded-xl border border-black/8 bg-zinc-50 px-3 py-2.5 text-lg hover:bg-zinc-100 transition"
+                                                >
+                                                    📄
+                                                </button>
+                                            </div>
 
                                             <div>
                                                 <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-widest text-zinc-400">

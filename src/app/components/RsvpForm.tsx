@@ -227,7 +227,15 @@ export default function RsvpForm({ lockedSession }: Props) {
 
     await loadSessionAvailability();
     setSubmitting(false);
-    router.push(`/rsvp/success?name=${encodeURIComponent(name)}`);
+    const params = new URLSearchParams({
+      name,
+      session: selectedSession,
+      guests: String(guests),
+      adults: String(adults),
+      kids: String(kids),
+      guestOf,
+    });
+    router.push(`/rsvp/success?${params.toString()}`);
   }
 
   return (

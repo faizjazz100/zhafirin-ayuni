@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 type Session = "Session 1" | "Session 2" | "Session 3";
 type GuestOf = "Bride" | "Groom";
@@ -100,6 +102,132 @@ export default function AdminPage() {
     URL.revokeObjectURL(url);
   }
 
+  function exportPDF() {
+    const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+    const pageW = doc.internal.pageSize.getWidth();
+    const margin = 10;
+
+    // ── Header band ──
+    doc.setFillColor(122, 0, 34);
+    doc.rect(0, 0, pageW, 26, "F");
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(16);
+    doc.setTextColor(255, 255, 255);
+    doc.text("RSVP Guest List", margin, 11);
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(255, 200, 215);
+    const subtitle = [
+      sessionFilter !== "All" ? sessionFilter : "All Sessions",
+      guestOfFilter !== "All" ? `· ${guestOfFilter} Side` : "· Bride & Groom",
+    ].join(" ");
+    doc.text(subtitle, margin, 18);
+
+    doc.setFontSize(7);
+    doc.text(
+      `Generated ${new Date().toLocaleString("en-MY", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}`,
+      pageW - margin, 18, { align: "right" }
+    );
+
+    // ── Summary: 2 rows × 4 cols ──
+    const summaryRows = [
+      [
+        { label: "Submissions", value: String(totals.submissions), accent: true },
+        { label: "Total Guests", value: String(totals.totalGuests), accent: true },
+        { label: "Adults", value: String(totals.totalAdults), accent: false },
+        { label: "Kids", value: String(totals.totalKids), accent: false },
+      ],
+      [
+        { label: "Session 1", value: String(totals.session1), accent: false },
+        { label: "Session 2", value: String(totals.session2), accent: false },
+        { label: "Session 3", value: String(totals.session3), accent: false },
+        { label: "Bride / Groom", value: `${totals.bride} / ${totals.groom}`, accent: false },
+      ],
+    ];
+    const blockW = (pageW - margin * 2) / 4;
+    const blockH = 14;
+    summaryRows.forEach((rowItems, ri) => {
+      const rowY = 29 + ri * (blockH + 1);
+      rowItems.forEach((item, ci) => {
+        const bx = margin + ci * blockW;
+        if (item.accent) {
+          doc.setFillColor(122, 0, 34);
+          doc.setTextColor(255, 255, 255);
+        } else {
+          doc.setFillColor(250, 245, 247);
+          doc.setTextColor(50, 40, 45);
+        }
+        doc.roundedRect(bx, rowY, blockW - 1, blockH, 2, 2, "F");
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(13);
+        doc.text(item.value, bx + blockW / 2 - 0.5, rowY + 7, { align: "center" });
+
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(6.5);
+        if (item.accent) doc.setTextColor(255, 200, 215);
+        else doc.setTextColor(140, 100, 115);
+        doc.text(item.label.toUpperCase(), bx + blockW / 2 - 0.5, rowY + 11.5, { align: "center" });
+      });
+    });
+
+    const tableStartY = 29 + 2 * (blockH + 1) + 4;
+
+    // ── Table: 4 readable columns ──
+    autoTable(doc, {
+      startY: tableStartY,
+      head: [["#", "Name & Phone", "Session · Side", "Guests"]],
+      body: rows.map((r, i) => [
+        String(i + 1),
+        `${r.full_name ?? "—"}\n${r.phone ?? "No phone"}`,
+        `${r.session ?? "—"} · ${r.guest_of ?? "—"}`,
+        `Total: ${r.guests ?? 0}\nAdults: ${r.adults ?? 0}  Kids: ${r.kids ?? 0}`,
+      ]),
+      styles: {
+        fontSize: 9.5,
+        cellPadding: { top: 4, right: 5, bottom: 4, left: 5 },
+        lineColor: [230, 218, 222],
+        lineWidth: 0.2,
+        textColor: [50, 40, 45],
+        overflow: "linebreak",
+        valign: "middle",
+      },
+      headStyles: {
+        fillColor: [122, 0, 34],
+        textColor: [255, 255, 255],
+        fontStyle: "bold",
+        fontSize: 8.5,
+        cellPadding: { top: 5, right: 5, bottom: 5, left: 5 },
+      },
+      alternateRowStyles: { fillColor: [253, 249, 247] },
+      columnStyles: {
+        0: { halign: "center", cellWidth: 15, fontStyle: "bold" },
+        1: { cellWidth: 67 },
+        2: { cellWidth: 56 },
+        3: { cellWidth: 52, halign: "center" },
+      },
+      margin: { left: margin, right: margin },
+    });
+
+    // ── Footer on every page ──
+    const pageCount = (doc.internal as unknown as { getNumberOfPages: () => number }).getNumberOfPages();
+    for (let p = 1; p <= pageCount; p++) {
+      doc.setPage(p);
+      const ph = doc.internal.pageSize.getHeight();
+      doc.setFillColor(245, 240, 242);
+      doc.rect(0, ph - 9, pageW, 9, "F");
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(7);
+      doc.setTextColor(150, 110, 120);
+      doc.text("Zhafirin & Ayuni · RSVP Guest List", margin, ph - 3);
+      doc.text(`Page ${p} of ${pageCount}`, pageW - margin, ph - 3, { align: "right" });
+    }
+
+    doc.save(`rsvps_${new Date().toISOString().slice(0, 10)}.pdf`);
+  }
+
   async function confirmDelete(id: string) {
     setDeletingIds((m) => ({ ...m, [id]: true }));
     setError("");
@@ -179,13 +307,13 @@ export default function AdminPage() {
               <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
               Schedule
             </Link>
-            <Link href="/admin/compact" className="inline-flex items-center gap-1.5 rounded-full bg-[#7A0022] px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-[#64001C] transition">
-              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
-              Compact
-            </Link>
             <button onClick={exportCSV} disabled={rows.length === 0} className="inline-flex items-center gap-1.5 rounded-full border border-black/10 bg-white/85 px-4 py-2.5 text-sm text-zinc-800 hover:bg-white disabled:opacity-40 transition">
               <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-              ExportCSV
+              CSV
+            </button>
+            <button onClick={exportPDF} disabled={rows.length === 0} className="inline-flex items-center gap-1.5 rounded-full border border-[#7A0022]/20 bg-[#7A0022]/5 px-4 py-2.5 text-sm font-medium text-[#7A0022] hover:bg-[#7A0022]/10 disabled:opacity-40 transition">
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /><path strokeLinecap="round" strokeLinejoin="round" d="M9 13h6m-3-3v6" /></svg>
+              PDF
             </button>
             <button onClick={load} className="inline-flex items-center gap-1.5 rounded-full border border-black/10 bg-white/85 px-4 py-2.5 text-sm text-zinc-800 hover:bg-white transition">
               <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
