@@ -16,10 +16,10 @@ export default function Page() {
   const RSVP_DEADLINE = "18 April 2026";
 
   const CONTACTS = [
-    { name: "Darwish (Bride’s)", phone: "012-846 2690" },
-    { name: "En Firdaus (Bride’s)", phone: "019-282 7625" },
     { name: "Mai (Groom’s)", phone: "013-355 2455" },
     { name: "Elin (Groom’s)", phone: "019-226 6996" },
+    { name: "Darwish (Bride’s)", phone: "012-846 2690" },
+    { name: "En Firdaus (Bride’s)", phone: "019-282 7625" },
   ];
 
   const toMYWa = (phone: string) => {
