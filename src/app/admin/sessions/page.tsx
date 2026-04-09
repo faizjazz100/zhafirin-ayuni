@@ -458,7 +458,7 @@ export default function AdminSessionsPage() {
 
             {/* ── Guest List Drawer ── */}
             {drawerSession && (
-                <div className="fixed inset-0 z-50 flex justify-end">
+                <div className="fixed inset-0 z-2002 flex justify-end">
                     {/* Backdrop */}
                     <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={closeDrawer} />
 
