@@ -97,7 +97,7 @@ export default function VenuePage() {
 
                     {/* Google Maps embed */}
                     <div className="mt-8">
-                        <p className="text-xs font-semibold uppercase tracking-[0.30em] text-[#7A0022]/80">Find Us</p>
+                        <p className="text-xs font-semibold uppercase tracking-[0.30em] text-[#7A0022]/80">Google Map</p>
                         <p className="mt-1 text-sm text-zinc-500">Interactive map.</p>
                         <div className="mt-3 overflow-hidden rounded-[28px] shadow-[0_10px_30px_rgba(0,0,0,0.08)]">
                             <div className="relative w-full" style={{ paddingTop: "56.25%" }}>
