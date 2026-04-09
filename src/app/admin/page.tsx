@@ -255,7 +255,7 @@ export default function AdminPage() {
       doc.text(`Page ${p} of ${pageCount}`, pageW - margin, ph - 3, { align: "right" });
     }
 
-    doc.save(`rsvps_${new Date().toISOString().slice(0, 10)}.pdf`);
+    doc.save(`Zhafirin_RSVP_${new Date().toISOString().slice(0, 10)}.pdf`);
   }
 
   async function confirmDelete(id: string) {
