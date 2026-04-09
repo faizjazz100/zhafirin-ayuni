@@ -3,7 +3,6 @@
 import { useEffect, useState, useRef } from "react";
 import { MapContainer, TileLayer, Polyline, useMap, useMapEvents } from "react-leaflet";
 import L from "leaflet";
-// @ts-expect-error – no types for CSS side-effect import
 import "leaflet/dist/leaflet.css";
 import { supabase } from "@/lib/supabase";
 import { buildRemarkIcon } from "@/src/app/components/buildRemarkIcon";
