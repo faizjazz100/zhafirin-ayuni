@@ -7,6 +7,7 @@ import SchedulePreview from "./components/SchedulePreview";
 import DaysToGo from "./components/DaysToGo";
 import { MotionDiv, MotionSection } from "./components/HomeAnimations";
 import HomeContactCards from "./components/HomeContactCards";
+import DirectionModal from "./components/DirectionModal";
 
 export default function Page() {
   // ---- DATA (edit freely) ----
@@ -202,6 +203,7 @@ export default function Page() {
             </p>
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
+              <DirectionModal />
               <SecondaryButton
                 href="https://maps.app.goo.gl/SfCJExkyFnWcZZ2J9"
                 icon={<FontAwesomeIcon icon={faGoogle} className="h-5 w-5" />}
@@ -215,9 +217,7 @@ export default function Page() {
               >
                 Open in Waze
               </SecondaryButton>
-              <AccentButton
-                href="/venue"
-              >
+              <AccentButton href="/venue">
                 Open Venue Page
               </AccentButton>
             </div>

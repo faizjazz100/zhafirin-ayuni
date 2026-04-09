@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import PageContainer from "@/src/app/components/PageContainer";
 import Image from "next/image";
 import { useState } from "react";
+import { DirectionAnimation } from "@/src/app/components/DirectionAnimation";
 
 export default function VenuePage() {
     const COUPLE = "Zhafirin & Ayuni";
@@ -74,30 +75,42 @@ export default function VenuePage() {
                         </div>
                     </div>
 
-                    <VenueMapLightbox />
-
-                    {/* Map embed */}
-                    <div className="mt-6 overflow-hidden rounded-[28px] border border-black/10 bg-white/80 shadow-[0_10px_30px_rgba(0,0,0,0.06)]">
-                        <div className="relative w-full" style={{ paddingTop: "56.25%" }}>
-                            <iframe
-                                title="Venue map"
-                                src={MAP_EMBED_URL}
-                                className="absolute inset-0 h-full w-full"
-                                loading="lazy"
-                                referrerPolicy="no-referrer-when-downgrade"
-                                allowFullScreen
-                            />
+                    {/* Direction route */}
+                    <div className="mt-8">
+                        <p className="text-xs font-semibold uppercase tracking-[0.30em] text-[#7A0022]/80">Route Guide</p>
+                        <p className="mt-1 text-sm text-zinc-500">Animated direction from the main road to the venue.</p>
+                        <div className="relative mt-3 overflow-hidden rounded-[28px] shadow-[0_10px_30px_rgba(0,0,0,0.08)]">
+                            <DirectionAnimation plain />
+                            {/* Block touch events so the map doesn't react to taps */}
+                            <div className="absolute inset-0" />
                         </div>
                     </div>
 
-                    {/* Notes */}
-                    <div className="mt-6 rounded-[28px] border border-black/10 bg-white/75 p-6">
-                        <p className="text-sm font-semibold text-zinc-900">Notes</p>
-                        <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-zinc-700">
-                            <li>Please arrive early for parking.</li>
-                            <li>Follow signage at the venue entrance.</li>
-                            <li>If you get lost, contact us from the Contact page.</li>
-                        </ul>
+                    {/* Static map image */}
+                    <div className="mt-8">
+                        <p className="text-xs font-semibold uppercase tracking-[0.30em] text-[#7A0022]/80">Venue Map</p>
+                        <p className="mt-1 text-sm text-zinc-500">Tap to enlarge.</p>
+                        <div className="mt-3">
+                            <VenueMapLightbox />
+                        </div>
+                    </div>
+
+                    {/* Google Maps embed */}
+                    <div className="mt-8">
+                        <p className="text-xs font-semibold uppercase tracking-[0.30em] text-[#7A0022]/80">Find Us</p>
+                        <p className="mt-1 text-sm text-zinc-500">Interactive map.</p>
+                        <div className="mt-3 overflow-hidden rounded-[28px] shadow-[0_10px_30px_rgba(0,0,0,0.08)]">
+                            <div className="relative w-full" style={{ paddingTop: "56.25%" }}>
+                                <iframe
+                                    title="Venue map"
+                                    src={MAP_EMBED_URL}
+                                    className="absolute inset-0 h-full w-full"
+                                    loading="lazy"
+                                    referrerPolicy="no-referrer-when-downgrade"
+                                    allowFullScreen
+                                />
+                            </div>
+                        </div>
                     </div>
 
                     {/* Actions */}
@@ -133,7 +146,7 @@ function VenueMapLightbox() {
         <>
             {/* Clickable thumbnail */}
             <div
-                className="mt-6 overflow-hidden rounded-[28px] border border-black/10 bg-white/80 shadow-[0_10px_30px_rgba(0,0,0,0.06)] cursor-zoom-in"
+                className="overflow-hidden rounded-[28px] shadow-[0_10px_30px_rgba(0,0,0,0.08)] cursor-zoom-in"
                 onClick={() => setOpen(true)}
             >
                 <Image
@@ -148,7 +161,7 @@ function VenueMapLightbox() {
             {/* Lightbox overlay */}
             {open && (
                 <div
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+                    className="fixed inset-0 z-9999 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
                     onClick={() => setOpen(false)}
                 >
                     <div className="relative max-w-4xl w-full" onClick={(e) => e.stopPropagation()}>
