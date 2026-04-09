@@ -59,7 +59,7 @@ export function buildRemarkIcon(pt: Waypoint, index: number, total: number, show
             </div>`;
     } else if (side === "bottom") {
         bubbleHtml = `
-            <div style="position:absolute;top:calc(50% + ${DOT / 2 + GAP}px);left:50%;
+            <div style="position:absolute;top:calc(50% + ${8}px);left:50%;
                 transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:2px;">
                 ${arrow}${bubble}
             </div>`;
