@@ -95,7 +95,7 @@ export default function Navbar({
 
     return (
         <>
-            <header className="sticky top-0 z-50">
+            <header className="sticky top-0 z-2001">
                 <div className="bg-[#FBF7F2]/55 backdrop-blur-md">
                     <div className="mx-auto max-w-5xl px-5 sm:px-6">
                         <div className="relative flex items-center justify-center py-4">
@@ -145,7 +145,7 @@ export default function Navbar({
             </header>
 
             <div
-                className={`fixed inset-0 z-40 transition ${open ? "pointer-events-auto" : "pointer-events-none"
+                className={`fixed inset-0 z-2000 transition ${open ? "pointer-events-auto" : "pointer-events-none"
                     }`}
                 aria-hidden={!open}
             >
