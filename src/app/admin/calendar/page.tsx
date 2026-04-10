@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
 type Session = "Session 1" | "Session 2" | "Session 3";
 type GuestOf = "Bride" | "Groom";
@@ -31,8 +32,8 @@ const MONTH_NAMES = [
 ];
 
 function toDateKey(iso: string) {
-    // "2026-04-03T..." → "2026-04-03"
-    return iso.slice(0, 10);
+    const d = new Date(iso);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 function buildGrid(year: number, month: number): (Date | null)[] {
@@ -87,7 +88,7 @@ export default function AdminCalendarPage() {
     const month = viewDate.getMonth();
     const grid = useMemo(() => buildGrid(year, month), [year, month]);
 
-    const todayKey = toDateKey(new Date().toISOString());
+    const todayKey = toDateKey(new Date().toString());
 
     function prevMonth() {
         setViewDate(new Date(year, month - 1, 1));
@@ -263,6 +264,42 @@ export default function AdminCalendarPage() {
                         </span>
                     </div>
                 </div>
+
+                {/* Daily trend chart */}
+                {!loading && rows.length > 0 && (() => {
+                    const map: Record<string, number> = {};
+                    rows.forEach((r) => {
+                        const d = new Date(r.created_at);
+                        const key = `${d.getMonth() + 1}/${d.getDate()}`;
+                        map[key] = (map[key] ?? 0) + 1;
+                    });
+                    const data = Object.entries(map)
+                        .sort((a, b) => {
+                            const [am, ad] = a[0].split("/").map(Number);
+                            const [bm, bd] = b[0].split("/").map(Number);
+                            return am !== bm ? am - bm : ad - bd;
+                        })
+                        .map(([date, count]) => ({ date, count }));
+                    return (
+                        <div className="mt-6 rounded-[20px] border border-black/10 bg-white/75 px-5 py-4 shadow-[0_4px_16px_rgba(0,0,0,0.05)]">
+                            <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-zinc-400">Daily Submissions</p>
+                            <ResponsiveContainer width="100%" height={130}>
+                                <AreaChart data={data} margin={{ top: 4, right: 4, left: -28, bottom: 0 }}>
+                                    <defs>
+                                        <linearGradient id="calGrad" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#7A0022" stopOpacity={0.18} />
+                                            <stop offset="95%" stopColor="#7A0022" stopOpacity={0} />
+                                        </linearGradient>
+                                    </defs>
+                                    <XAxis dataKey="date" tick={{ fontSize: 10, fill: "#a1a1aa" }} tickLine={false} axisLine={false} />
+                                    <YAxis tick={{ fontSize: 10, fill: "#a1a1aa" }} tickLine={false} axisLine={false} allowDecimals={false} />
+                                    <Tooltip contentStyle={{ fontSize: 12, borderRadius: 10, border: "1px solid #e4e4e7", boxShadow: "0 4px 16px rgba(0,0,0,0.08)" }} />
+                                    <Area type="monotone" dataKey="count" stroke="#7A0022" strokeWidth={2} fill="url(#calGrad)" dot={false} name="Submissions" />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        </div>
+                    );
+                })()}
 
                 {/* Selected day submissions */}
                 {selected && (

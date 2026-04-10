@@ -454,6 +454,7 @@ export default function AdminSessionsPage() {
                         </div>
                     )}
                 </div>
+
             </main>
 
             {/* ── Guest List Drawer ── */}

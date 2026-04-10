@@ -2,8 +2,135 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
 import PageContainer from "@/src/app/components/PageContainer";
+import { supabase } from "@/lib/supabase";
+
+function StoryLike() {
+    const [count, setCount] = useState(0);
+    const [liked, setLiked] = useState(false);
+    const [isAdmin, setIsAdmin] = useState(false);
+    const [showInput, setShowInput] = useState(false);
+    const [phone, setPhone] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        supabase.from("story_likes").select("id", { count: "exact" }).then(({ count: c }) => {
+            setCount(c ?? 0);
+        });
+        if (localStorage.getItem("story_liked_phone")) setLiked(true);
+        if (localStorage.getItem("zh_admin")) setIsAdmin(true);
+    }, []);
+
+    function clearLike() {
+        localStorage.removeItem("story_liked_phone");
+        setLiked(false);
+        setShowInput(false);
+        setPhone("");
+        setError("");
+    }
+
+    useEffect(() => {
+        if (showInput) setTimeout(() => {
+            inputRef.current?.focus();
+            inputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+        }, 100);
+    }, [showInput]);
+
+    async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
+        e.preventDefault();
+        const cleaned = phone.trim().replace(/\s+/g, "");
+        if (!cleaned) return;
+        setLoading(true);
+        setError("");
+        const { error: err } = await supabase.from("story_likes").insert({ phone: cleaned });
+        setLoading(false);
+        if (err) {
+            if (err.code === "23505") {
+                setError("This number has already liked the story.");
+            } else {
+                setError("Something went wrong. Try again.");
+            }
+            return;
+        }
+        localStorage.setItem("story_liked_phone", cleaned);
+        setLiked(true);
+        setShowInput(false);
+        setCount((c) => c + 1);
+    }
+
+    return (
+        <div className="mt-10 flex flex-col items-center gap-3">
+            <button
+                onClick={() => { if (!liked) setShowInput(true); }}
+                disabled={liked}
+                className={`group flex items-center gap-2 rounded-full px-6 py-3 text-sm font-medium transition ${
+                    liked
+                        ? "bg-rose-50 text-rose-500 border border-rose-200 cursor-default"
+                        : "bg-white/80 border border-black/10 text-zinc-700 hover:border-rose-300 hover:text-rose-500 hover:bg-rose-50"
+                }`}
+            >
+                <svg
+                    className={`h-4 w-4 transition-transform ${liked ? "scale-110" : "group-hover:scale-110"}`}
+                    fill={liked ? "currentColor" : "none"}
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                </svg>
+                {liked ? "Liked!" : "Like this story"}
+                <span className="ml-1 text-xs opacity-60">{count}</span>
+            </button>
+
+            {isAdmin && liked && (
+                <button
+                    type="button"
+                    onClick={clearLike}
+                    className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs text-zinc-400 hover:text-red-500 hover:border-red-200 transition"
+                >
+                    Reset (admin)
+                </button>
+            )}
+
+            {showInput && (
+                <form
+                    onSubmit={handleSubmit}
+                    className="w-full max-w-xs rounded-2xl border border-black/10 bg-white p-4 shadow-lg"
+                >
+                    <p className="mb-3 text-center text-xs text-zinc-500">Enter your phone number to like</p>
+                    <input
+                        ref={inputRef}
+                        type="tel"
+                        inputMode="numeric"
+                        value={phone}
+                        onChange={(e) => { setPhone(e.target.value); setError(""); }}
+                        placeholder="e.g. 0123456789"
+                        className="w-full rounded-xl border border-black/10 bg-zinc-50 px-4 py-3 text-base outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
+                    />
+                    {error && <p className="mt-2 text-center text-xs text-red-500">{error}</p>}
+                    <button
+                        type="submit"
+                        disabled={loading || !phone.trim()}
+                        className="mt-3 w-full rounded-xl bg-rose-500 py-3 text-sm font-semibold text-white disabled:opacity-50 transition"
+                    >
+                        {loading ? "Submitting…" : "Like ♥"}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => { setShowInput(false); setError(""); }}
+                        className="mt-2 w-full py-1 text-sm text-zinc-400"
+                    >
+                        Cancel
+                    </button>
+                </form>
+            )}
+        </div>
+    );
+}
 
 export default function OurStoryPage() {
     return (
@@ -110,6 +237,8 @@ export default function OurStoryPage() {
                         </div>
                     </div>
 
+                    {/* <StoryLike /> */}
+
                     {/* Actions */}
                     <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:justify-center">
                         <Link
@@ -127,7 +256,7 @@ export default function OurStoryPage() {
                         </Link>
                     </div>
 
-                    <p className="mt-10 text-center text-sm text-zinc-600">
+                    <p className="mt-6 text-center text-sm text-zinc-600">
                         © {new Date().getFullYear()} Zhafirin & Ayuni
                     </p>
                 </motion.article>
