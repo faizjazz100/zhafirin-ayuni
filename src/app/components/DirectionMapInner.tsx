@@ -18,16 +18,23 @@ L.Icon.Default.mergeOptions({
 
 const DEFAULT_CENTER: [number, number] = [2.96425, 101.63183];
 
-function interpolate(pts: Waypoint[], steps = 40): [number, number][] {
+// Distribute points proportionally to segment length so animation
+// moves at a constant geographic speed across the whole route.
+function interpolate(pts: Waypoint[], totalPoints = 300): [number, number][] {
+    const segments = pts.slice(0, -1).map((p, i) => ({
+        lat1: p.lat, lng1: p.lng,
+        lat2: pts[i + 1].lat, lng2: pts[i + 1].lng,
+        dist: Math.hypot(pts[i + 1].lat - p.lat, pts[i + 1].lng - p.lng),
+    }));
+    const totalDist = segments.reduce((s, seg) => s + seg.dist, 0);
     const out: [number, number][] = [];
-    for (let i = 0; i < pts.length - 1; i++) {
-        const { lat: lat1, lng: lng1 } = pts[i];
-        const { lat: lat2, lng: lng2 } = pts[i + 1];
+    segments.forEach((seg, i) => {
+        const steps = Math.max(2, Math.round(totalPoints * seg.dist / totalDist));
         for (let s = i === 0 ? 0 : 1; s <= steps; s++) {
             const t = s / steps;
-            out.push([lat1 + (lat2 - lat1) * t, lng1 + (lng2 - lng1) * t]);
+            out.push([seg.lat1 + (seg.lat2 - seg.lat1) * t, seg.lng1 + (seg.lng2 - seg.lng1) * t]);
         }
-    }
+    });
     return out;
 }
 
@@ -142,7 +149,7 @@ export default function DirectionMapInner({ replayKey = 0, interactive = false }
                     clearInterval(animRef.current!);
                     setTimeout(() => setShowPin(true), 200);
                 }
-            }, 30);
+            }, 50);
         });
         return () => {
             cancelAnimationFrame(rafId);
