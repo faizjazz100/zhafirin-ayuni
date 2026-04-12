@@ -11,13 +11,13 @@ const DirectionMapInner = dynamic(() => import("./DirectionMapInner"), {
     ),
 });
 
-export function DirectionAnimation({ plain = false }: { plain?: boolean }) {
+export function DirectionAnimation({ plain = false, interactive = false }: { plain?: boolean; interactive?: boolean }) {
     if (plain) {
-        return <DirectionMapInner />;
+        return <DirectionMapInner interactive={interactive} />;
     }
     return (
         <div className="mt-6 overflow-hidden rounded-[28px] border border-black/10 bg-white/80 shadow-[0_10px_30px_rgba(0,0,0,0.06)]">
-            <DirectionMapInner />
+            <DirectionMapInner interactive={interactive} />
         </div>
     );
 }

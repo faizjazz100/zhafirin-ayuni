@@ -35,13 +35,14 @@ function interpolate(pts: Waypoint[], steps = 40): [number, number][] {
 function RemarkMarkers({ waypoints }: { waypoints: Waypoint[] }) {
     const map = useMap();
     const markersRef = useRef<L.Marker[]>([]);
+    const compact = typeof window !== "undefined" && window.innerWidth < 640;
 
     useEffect(() => {
         markersRef.current.forEach(m => m.remove());
         markersRef.current = [];
         waypoints.forEach((pt, i) => {
             if (!pt.remark) return;
-            const icon = buildRemarkIcon(pt, i, waypoints.length, false);
+            const icon = buildRemarkIcon(pt, i, waypoints.length, false, compact);
             markersRef.current.push(L.marker([pt.lat, pt.lng], { icon }).addTo(map));
         });
         return () => { markersRef.current.forEach(m => m.remove()); };
@@ -102,7 +103,7 @@ function FitRoute({ route }: { route: Waypoint[] }) {
     return null;
 }
 
-export default function DirectionMapInner({ replayKey = 0 }: { replayKey?: number }) {
+export default function DirectionMapInner({ replayKey = 0, interactive = false }: { replayKey?: number; interactive?: boolean }) {
     const [route, setRoute] = useState<Waypoint[]>([]);
     const [visiblePoints, setVisiblePoints] = useState<[number, number][]>([]);
     const [showPin, setShowPin] = useState(false);
@@ -178,11 +179,11 @@ export default function DirectionMapInner({ replayKey = 0 }: { replayKey?: numbe
                 center={DEFAULT_CENTER}
                 zoom={17}
                 style={{ height: "380px", width: "100%" }}
-                zoomControl={false}
+                zoomControl={interactive}
                 attributionControl={false}
             >
-                <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                <LockMap />
+                <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" detectRetina />
+                {!interactive && <LockMap />}
                 <FitRoute route={route} />
                 {visiblePoints.length >= 2 && (
                     <Polyline

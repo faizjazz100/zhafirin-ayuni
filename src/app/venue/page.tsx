@@ -79,10 +79,8 @@ export default function VenuePage() {
                     <div className="mt-8">
                         <p className="text-xs font-semibold uppercase tracking-[0.30em] text-[#7A0022]/80">Route Guide</p>
                         <p className="mt-1 text-sm text-zinc-500">Animated direction from the main road to the venue.</p>
-                        <div className="relative mt-3 overflow-hidden rounded-[28px] shadow-[0_10px_30px_rgba(0,0,0,0.08)]">
-                            <DirectionAnimation plain />
-                            {/* Block touch events so the map doesn't react to taps */}
-                            <div className="absolute inset-0" />
+                        <div className="mt-3 overflow-hidden rounded-[28px] shadow-[0_10px_30px_rgba(0,0,0,0.08)]">
+                            <DirectionAnimation plain interactive />
                         </div>
                     </div>
 

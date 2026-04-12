@@ -15,17 +15,27 @@ L.Icon.Default.mergeOptions({
     shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
 });
 
-export type RemarkSide = "top" | "bottom" | "left" | "right";
+export type RemarkSide = "top" | "top-right" | "right" | "bottom-right" | "bottom" | "bottom-left" | "left" | "top-left";
 export type Waypoint = { lat: number; lng: number; remark?: string; remarkSide?: RemarkSide };
 
 const DEFAULT_CENTER: [number, number] = [2.96425, 101.63183];
 
-const SIDE_BUTTONS: { side: RemarkSide; label: string }[] = [
-    { side: "top", label: "↑" },
-    { side: "bottom", label: "↓" },
-    { side: "left", label: "←" },
-    { side: "right", label: "→" },
+// 3×3 compass grid — null = center dot
+const COMPASS: (RemarkSide | null)[][] = [
+    ["top-left",    "top",    "top-right"],
+    ["left",         null,    "right"],
+    ["bottom-left", "bottom", "bottom-right"],
 ];
+const COMPASS_LABELS: Record<RemarkSide, string> = {
+    "top":          "↑",
+    "top-right":    "↗",
+    "right":        "→",
+    "bottom-right": "↘",
+    "bottom":       "↓",
+    "bottom-left":  "↙",
+    "left":         "←",
+    "top-left":     "↖",
+};
 
 function WaypointMarkers({ points }: { points: Waypoint[] }) {
     const map = useMap();
@@ -169,13 +179,13 @@ export default function RouteEditor() {
                                     {i + 1}
                                 </div>
                                 {/* Remark text */}
-                                <input
-                                    type="text"
+                                <textarea
                                     value={pt.remark ?? ""}
                                     onChange={e => update(i, { remark: e.target.value || undefined })}
-                                    placeholder={i === points.length - 1 ? "e.g. Venue entrance" : "e.g. Turn left here"}
-                                    maxLength={40}
-                                    className="flex-1 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-sm outline-none focus:border-zinc-400"
+                                    placeholder={i === points.length - 1 ? "e.g. Venue entrance" : "e.g. Turn left\nhere"}
+                                    maxLength={80}
+                                    rows={2}
+                                    className="flex-1 resize-none rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-sm outline-none focus:border-zinc-400"
                                 />
                             </div>
 
@@ -183,8 +193,12 @@ export default function RouteEditor() {
                             {pt.remark && (
                                 <div className="flex items-center gap-2 pl-9">
                                     <span className="text-xs text-zinc-400">Label position:</span>
-                                    <div className="flex gap-1">
-                                        {SIDE_BUTTONS.map(({ side, label }) => (
+                                    <div className="grid grid-cols-3 gap-0.5">
+                                        {COMPASS.flat().map((side, idx) => side === null ? (
+                                            <div key={idx} className="h-7 w-7 flex items-center justify-center">
+                                                <div className="h-3 w-3 rounded-full border-2 border-[#7A0022]" />
+                                            </div>
+                                        ) : (
                                             <button
                                                 key={side}
                                                 onClick={() => update(i, { remarkSide: side })}
@@ -195,7 +209,7 @@ export default function RouteEditor() {
                                                         : "border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-100",
                                                 ].join(" ")}
                                             >
-                                                {label}
+                                                {COMPASS_LABELS[side]}
                                             </button>
                                         ))}
                                     </div>
