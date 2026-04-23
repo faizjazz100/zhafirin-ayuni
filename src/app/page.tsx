@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { Suspense } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faWaze, faGoogle } from "@fortawesome/free-brands-svg-icons";
 import MessageCarouselSection from "./components/MessageCarouselSection";
@@ -8,6 +9,7 @@ import DaysToGo from "./components/DaysToGo";
 import { MotionDiv, MotionSection } from "./components/HomeAnimations";
 import HomeContactCards from "./components/HomeContactCards";
 import DirectionModal from "./components/DirectionModal";
+import LinkTracker from "./components/LinkTracker";
 
 export default function Page() {
   // ---- DATA (edit freely) ----
@@ -21,6 +23,7 @@ export default function Page() {
 
   return (
     <main className="min-h-screen bg-[#FBF7F2] text-zinc-900 selection:bg-[#7A0022]/15">
+      <Suspense fallback={null}><LinkTracker /></Suspense>
       {/* Soft background (no Iridescence) */}
       <div className="pointer-events-none fixed inset-0 -z-10">
         <div className="absolute inset-0 bg-[radial-gradient(1200px_800px_at_10%_10%,rgba(122,0,34,0.10),transparent_60%),radial-gradient(900px_700px_at_90%_20%,rgba(176,16,62,0.10),transparent_55%),radial-gradient(900px_700px_at_50%_100%,rgba(0,0,0,0.06),transparent_60%)]" />
