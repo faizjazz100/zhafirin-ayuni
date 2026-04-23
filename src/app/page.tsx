@@ -1,5 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
+import { alexBrush } from "@/lib/fonts";
+import FloralBackground from "@/src/app/components/FloralBackground";
 import { Suspense } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faWaze, faGoogle } from "@fortawesome/free-brands-svg-icons";
@@ -22,8 +24,9 @@ export default function Page() {
 
 
   return (
-    <main className="min-h-screen bg-[#FBF7F2] text-zinc-900 selection:bg-[#7A0022]/15">
+    <main className="min-h-screen text-zinc-900 selection:bg-[#7A0022]/15">
       <Suspense fallback={null}><LinkTracker /></Suspense>
+      <FloralBackground />
       {/* Soft background (no Iridescence) */}
       <div className="pointer-events-none fixed inset-0 -z-10">
         <div className="absolute inset-0 bg-[radial-gradient(1200px_800px_at_10%_10%,rgba(122,0,34,0.10),transparent_60%),radial-gradient(900px_700px_at_90%_20%,rgba(176,16,62,0.10),transparent_55%),radial-gradient(900px_700px_at_50%_100%,rgba(0,0,0,0.06),transparent_60%)]" />
@@ -89,7 +92,7 @@ export default function Page() {
             Puchong, Selangor
           </p>
 
-          <h1 className="mt-5 font-script text-5xl text-zinc-800 sm:text-6xl" style={{ fontFamily: "'Great Vibes', cursive" }}>
+          <h1 className={`${alexBrush.className} mt-5 text-5xl text-zinc-800 sm:text-6xl`}>
             {COUPLE}
           </h1>
 
@@ -131,14 +134,15 @@ export default function Page() {
             </div>
           </div>
 
-          <MessageCarouselSection></MessageCarouselSection>
+        </div>
 
-          <div className="mt-14">
-            <div className="text-[13px] font-semibold tracking-[0.38em] text-zinc-700">
-              WEDDING DAY
-            </div>
-            <div className="mx-auto mt-4 h-px w-24 bg-black/10" />
+        <MessageCarouselSection></MessageCarouselSection>
+
+        <div className="mt-14 text-center">
+          <div className="text-[13px] font-semibold tracking-[0.38em] text-zinc-700">
+            WEDDING DAY
           </div>
+          <div className="mx-auto mt-4 h-px w-24 bg-black/10" />
         </div>
 
         {/* OUR STORY */}

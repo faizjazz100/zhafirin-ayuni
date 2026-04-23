@@ -35,6 +35,6 @@ body {
 }
 
 .font-script {
-    font-family: ui-serif, "Snell Roundhand", "Apple Chancery",
-        "Brush Script MT", "Segoe Script", cursive;
+    font-family: var(--font-script), "Snell Roundhand", "Apple Chancery",
+        "Brush Script MT", cursive;
 }

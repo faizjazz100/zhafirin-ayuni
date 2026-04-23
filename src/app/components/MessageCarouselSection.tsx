@@ -180,7 +180,7 @@ export default function MessageCarouselSection() {
 
                     <div
                         ref={scrollerRef}
-                        className="flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth pb-2 px-[6%] sm:px-[10%] md:px-0"
+                        className="flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth pb-2 px-[6%] sm:px-[10%] md:px-14"
                         style={{
                             WebkitOverflowScrolling: "touch",
                             scrollbarWidth: "none",
@@ -196,7 +196,7 @@ export default function MessageCarouselSection() {
                             <article
                                 key={it.id}
                                 data-card
-                                className="w-[110%] shrink-0 snap-center rounded-[26px] border border-black/10 bg-white p-6 shadow-[0_4px_20px_rgba(0,0,0,0.05)] sm:w-[70%] md:w-[520px]"
+                                className="w-[110%] shrink-0 snap-center rounded-[26px] border border-black/10 bg-white p-6 shadow-[0_4px_20px_rgba(0,0,0,0.05)] sm:w-[70%] md:w-full"
                             >
                                 <header className="flex items-start gap-3">
                                     <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-black/10 bg-[#FBF7F2] text-xs font-semibold tracking-[0.20em] text-[#7A0022]">

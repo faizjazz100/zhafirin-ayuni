@@ -1,6 +1,6 @@
 export default function FloralBackground() {
     return (
-        <div className="pointer-events-none fixed inset-0 -z-10" aria-hidden="true">
+        <div className="pointer-events-none fixed inset-0" style={{ zIndex: -1, transform: "translateZ(0)", willChange: "transform" }} aria-hidden="true">
             <svg
                 width="100%"
                 height="100%"
@@ -9,7 +9,7 @@ export default function FloralBackground() {
                 xmlns="http://www.w3.org/2000/svg"
             >
                 {/* LEFT VINE */}
-                <g opacity="0.45">
+                <g opacity="0.65">
                     <path d="M40 0 C30 80 50 160 35 240 C20 320 10 400 25 480 C40 560 55 640 40 720 C28 800 20 860 30 900" stroke="#7A0022" strokeWidth="1.4" fill="none" strokeLinecap="round" />
                     <path d="M38 60 C25 50 15 55 16 63" stroke="#7A0022" strokeWidth="0.7" fill="none" strokeLinecap="round" opacity="0.6" />
                     <path d="M33 160 C20 150 10 155 12 163" stroke="#7A0022" strokeWidth="0.7" fill="none" strokeLinecap="round" opacity="0.55" />

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import PageContainer from "@/src/app/components/PageContainer";
+import FloralBackground from "@/src/app/components/FloralBackground";
 import { supabase } from "@/lib/supabase";
 
 type ContactItem = {
@@ -42,7 +43,8 @@ export default function ContactPage() {
     }, []);
 
     return (
-        <main className="min-h-screen bg-[#FBF7F2] text-zinc-800">
+        <main className="min-h-screen text-zinc-800">
+            <FloralBackground />
             {/* Soft background (matches home) */}
             <div className="pointer-events-none fixed inset-0 -z-10">
                 <div className="absolute inset-0 bg-[radial-gradient(1200px_800px_at_10%_10%,rgba(122,0,34,0.10),transparent_60%),radial-gradient(900px_700px_at_90%_20%,rgba(176,16,62,0.08),transparent_55%),radial-gradient(900px_700px_at_50%_100%,rgba(0,0,0,0.06),transparent_60%)]" />
@@ -114,7 +116,7 @@ export default function ContactPage() {
                     </div>
 
                     {/* Actions */}
-                    <div className="mt-10 flex flex-col gap-3 sm:flex-row">
+                    <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:justify-center">
                         <Link
                             href="/"
                             className="inline-flex items-center justify-center rounded-2xl border border-black/10 bg-white/85 px-5 py-3 text-sm text-zinc-900 hover:bg-white"

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import PageContainer from "@/src/app/components/PageContainer";
+import FloralBackground from "@/src/app/components/FloralBackground";
 import Image from "next/image";
 import { useState } from "react";
 import { DirectionAnimation } from "@/src/app/components/DirectionAnimation";
@@ -18,7 +19,8 @@ export default function VenuePage() {
     const WAZE_URL = "https://waze.com/ul/hw282bew6e&navigate=yes";
 
     return (
-        <main className="min-h-screen bg-[#FBF7F2] text-zinc-800">
+        <main className="min-h-screen text-zinc-800">
+            <FloralBackground />
             <PageContainer floral>
                 <motion.div
                     initial={{ opacity: 0, y: 12 }}
@@ -112,7 +114,7 @@ export default function VenuePage() {
                     </div>
 
                     {/* Actions */}
-                    <div className="mt-10 flex flex-col gap-3 sm:flex-row">
+                    <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:justify-center">
                         <Link
                             href="/"
                             className="inline-flex items-center justify-center rounded-2xl border border-black/10 bg-white/85 px-5 py-3 text-sm text-zinc-900 hover:bg-white"

@@ -11,7 +11,7 @@ function InfoCard({ time, title }: { time: string; title: string }) {
                 <div className="whitespace-nowrap text-base font-semibold text-zinc-900">
                     {time}
                 </div>
-                <div className="min-w-0 text-right">
+                <div className="min-w-0">
                     <p className="text-sm font-semibold leading-snug text-zinc-800">
                         {title}
                     </p>

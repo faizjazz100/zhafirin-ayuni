@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import FloralBackground from "@/src/app/components/FloralBackground";
 import { useRef, useState, Suspense } from "react";
 import { toPng } from "html-to-image";
 
@@ -37,7 +38,8 @@ function SuccessContent() {
   }
 
   return (
-    <main className="min-h-screen bg-[#FBF7F2] text-zinc-800">
+    <main className="min-h-screen text-zinc-800">
+      <FloralBackground />
       <div className="pointer-events-none fixed inset-0 -z-10">
         <div className="absolute inset-0 bg-[radial-gradient(1200px_800px_at_10%_10%,rgba(122,0,34,0.10),transparent_60%),radial-gradient(900px_700px_at_90%_20%,rgba(176,16,62,0.08),transparent_55%)]" />
         <div className="absolute inset-0 bg-gradient-to-b from-white/70 via-[#FBF7F2]/55 to-white/80" />

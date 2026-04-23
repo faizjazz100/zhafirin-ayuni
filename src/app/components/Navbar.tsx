@@ -99,13 +99,45 @@ export default function Navbar({
                 <div className="bg-[#FBF7F2]/55 backdrop-blur-md">
                     <div className="mx-auto max-w-5xl px-5 sm:px-6">
                         <div className="relative flex items-center justify-center py-4">
+                            {/* Hamburger — mobile/tablet only */}
                             <button
                                 aria-label={open ? "Close menu" : "Open menu"}
-                                className="absolute left-0 inline-flex h-10 w-10 items-center justify-center text-zinc-700 transition hover:text-zinc-900"
+                                className="absolute left-0 inline-flex h-10 w-10 items-center justify-center text-zinc-700 transition hover:text-zinc-900 lg:hidden"
                                 onClick={() => setOpen((v) => !v)}
                             >
                                 <Hamburger />
                             </button>
+
+                            {/* Desktop nav links — large screens only */}
+                            <nav className="absolute left-0 hidden items-center gap-5 lg:flex">
+                                {navItems.map((it) => {
+                                    if ("kind" in it && it.kind === "anchor") {
+                                        return (
+                                            <button
+                                                key={it.label}
+                                                className="text-[11px] font-semibold tracking-[0.18em] text-zinc-600 transition hover:text-[#7A0022]"
+                                                onClick={() => {
+                                                    const id = it.href.slice(1);
+                                                    const el = document.getElementById(id);
+                                                    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+                                                    history.replaceState(null, "", it.href);
+                                                }}
+                                            >
+                                                {it.label}
+                                            </button>
+                                        );
+                                    }
+                                    return (
+                                        <Link
+                                            key={it.label}
+                                            href={it.href}
+                                            className="text-[11px] font-semibold tracking-[0.18em] text-zinc-600 transition hover:text-[#7A0022]"
+                                        >
+                                            {it.label}
+                                        </Link>
+                                    );
+                                })}
+                            </nav>
 
                             <Link
                                 href="/"
@@ -114,10 +146,10 @@ export default function Navbar({
                                 {monogram}
                             </Link>
 
-                            <div className="absolute right-0 hidden items-center gap-4 sm:flex">
+                            <div className="absolute right-0 flex items-center gap-4">
                                 <Link
                                     href={rsvpHref}
-                                    className="text-xs font-semibold tracking-[0.30em] text-[#7A0022] transition hover:text-[#64001C]"
+                                    className="hidden text-xs font-semibold tracking-[0.30em] text-[#7A0022] transition hover:text-[#64001C] sm:block"
                                 >
                                     RSVP
                                 </Link>
@@ -125,7 +157,7 @@ export default function Navbar({
                                 {isAdmin && (
                                     <Link
                                         href="/admin"
-                                        className="text-xs font-semibold tracking-[0.30em] text-[#7A0022] transition hover:text-[#64001C]"
+                                        className="hidden text-xs font-semibold tracking-[0.30em] text-[#7A0022] transition hover:text-[#64001C] sm:block"
                                     >
                                         Admin
                                     </Link>
