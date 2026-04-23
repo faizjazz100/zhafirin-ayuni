@@ -12,8 +12,9 @@ export default function LinkTracker() {
         const param = TRACKED_PARAMS.find((p) => searchParams.has(p));
         if (!param) return;
 
-        const sessionKey = `tracked_${param}`;
-        if (sessionStorage.getItem(sessionKey)) return;
+        const cooldownKey = `lv_last_${param}`;
+        const last = Number(localStorage.getItem(cooldownKey) ?? 0);
+        if (Date.now() - last < 30 * 60 * 1000) return; // 30-min cooldown
 
         let visitorId = localStorage.getItem("lv_visitor_id");
         if (!visitorId) {
@@ -23,7 +24,7 @@ export default function LinkTracker() {
             localStorage.setItem("lv_visitor_id", visitorId);
         }
 
-        sessionStorage.setItem(sessionKey, "1");
+        localStorage.setItem(cooldownKey, String(Date.now()));
 
         fetch("/api/track", {
             method: "POST",

@@ -10,6 +10,7 @@ type Visit = {
     visitor_id: string;
     country: string | null;
     city: string | null;
+    ip: string | null;
     created_at: string;
 };
 
@@ -18,6 +19,15 @@ type ParamStat = {
     total: number;
     unique: number;
     countries: { country: string; count: number }[];
+};
+
+type VisitorStat = {
+    visitor_id: string;
+    visits: number;
+    country: string | null;
+    city: string | null;
+    ip: string | null;
+    last_seen: string;
 };
 
 function timeAgo(iso: string) {
@@ -80,6 +90,26 @@ export default function AdminLinksPage() {
                 .sort((a, b) => b[1] - a[1])
                 .map(([country, count]) => ({ country, count })),
         })).sort((a, b) => b.unique - a.unique);
+    })();
+
+    // Per-visitor breakdown: how many times each visitor visited
+    const visitorStats: VisitorStat[] = (() => {
+        const map: Record<string, { visits: number; country: string | null; city: string | null; ip: string | null; last_seen: string }> = {};
+        for (const v of visits) {
+            if (!map[v.visitor_id]) {
+                map[v.visitor_id] = { visits: 0, country: v.country, city: v.city, ip: v.ip, last_seen: v.created_at };
+            }
+            map[v.visitor_id].visits++;
+            if (v.created_at > map[v.visitor_id].last_seen) {
+                map[v.visitor_id].last_seen = v.created_at;
+                map[v.visitor_id].country = v.country;
+                map[v.visitor_id].city = v.city;
+                map[v.visitor_id].ip = v.ip;
+            }
+        }
+        return Object.entries(map)
+            .map(([visitor_id, d]) => ({ visitor_id, ...d }))
+            .sort((a, b) => b.visits - a.visits);
     })();
 
     const recent = visits.slice(0, 30);
@@ -147,9 +177,7 @@ export default function AdminLinksPage() {
                                     <div className="flex items-center justify-between border-b border-black/6 px-5 py-4">
                                         <div>
                                             <p className="font-semibold text-zinc-900">?{s.param}</p>
-                                            <p className="text-xs text-zinc-400 mt-0.5">
-                                                e.g. <span className="font-mono">/?{s.param}</span>
-                                            </p>
+                                            <p className="text-xs text-zinc-400 mt-0.5 font-mono">/?{s.param}</p>
                                         </div>
                                         <div className="flex gap-4 text-right">
                                             <div>
@@ -180,7 +208,41 @@ export default function AdminLinksPage() {
                     )}
                 </section>
 
-                {/* Recent visits */}
+                {/* Per-visitor breakdown */}
+                {!loading && visitorStats.length > 0 && (
+                    <section className="mb-8">
+                        <div className="mb-3 flex items-center gap-3">
+                            <p className="text-xs font-semibold uppercase tracking-widest text-zinc-400">Visitors</p>
+                            <span className="h-px flex-1 bg-black/8" />
+                            <span className="text-[10px] text-zinc-400">{visitorStats.length} unique</span>
+                        </div>
+                        <div className="overflow-hidden rounded-2xl border border-black/8 bg-white/80">
+                            {visitorStats.map((v, i) => (
+                                <div
+                                    key={v.visitor_id}
+                                    className={`flex items-center gap-3 px-5 py-3 ${i !== 0 ? "border-t border-black/5" : ""}`}
+                                >
+                                    <span className="text-lg shrink-0">{countryFlag(v.country)}</span>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            <p className="text-sm font-medium text-zinc-800 font-mono">{v.visitor_id.slice(0, 8)}…</p>
+                                            {v.city && <span className="text-xs text-zinc-500">{v.city}{v.country ? `, ${v.country}` : ""}</span>}
+                                            {!v.city && v.country && <span className="text-xs text-zinc-500">{v.country}</span>}
+                                        </div>
+                                        {v.ip && <p className="text-xs text-zinc-400 font-mono">{v.ip}</p>}
+                                        <p className="text-xs text-zinc-400">last seen {timeAgo(v.last_seen)}</p>
+                                    </div>
+                                    <div className="text-right shrink-0">
+                                        <p className="text-lg font-bold text-zinc-900">{v.visits}</p>
+                                        <p className="text-[10px] uppercase tracking-widest text-zinc-400">visit{v.visits !== 1 ? "s" : ""}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </section>
+                )}
+
+                {/* Recent visits log */}
                 {!loading && recent.length > 0 && (
                     <section>
                         <div className="mb-3 flex items-center gap-3">
@@ -193,20 +255,16 @@ export default function AdminLinksPage() {
                                     key={v.id}
                                     className={`flex items-center gap-3 px-5 py-3 ${i !== 0 ? "border-t border-black/5" : ""}`}
                                 >
-                                    <span className="text-lg">{countryFlag(v.country)}</span>
+                                    <span className="text-lg shrink-0">{countryFlag(v.country)}</span>
                                     <div className="flex-1 min-w-0">
                                         <p className="text-sm font-medium text-zinc-800">
                                             <span className="font-mono text-[#7A0022]">?{v.param}</span>
-                                            {v.city && v.country && (
-                                                <span className="ml-2 font-sans font-normal text-zinc-500">
-                                                    {v.city}, {v.country}
-                                                </span>
-                                            )}
-                                            {!v.city && v.country && (
-                                                <span className="ml-2 font-normal text-zinc-500">{v.country}</span>
-                                            )}
+                                            {v.city && <span className="ml-2 font-normal text-zinc-500">{v.city}{v.country ? `, ${v.country}` : ""}</span>}
+                                            {!v.city && v.country && <span className="ml-2 font-normal text-zinc-500">{v.country}</span>}
                                         </p>
-                                        <p className="text-xs text-zinc-400">{v.visitor_id.slice(0, 8)}… · {timeAgo(v.created_at)}</p>
+                                        <p className="text-xs text-zinc-400 font-mono">
+                                            {v.visitor_id.slice(0, 8)}…{v.ip ? ` · ${v.ip}` : ""} · {timeAgo(v.created_at)}
+                                        </p>
                                     </div>
                                 </div>
                             ))}

@@ -10,13 +10,15 @@ export async function POST(req: NextRequest) {
 
         const country = req.headers.get("x-vercel-ip-country") ?? null;
         const city = req.headers.get("x-vercel-ip-city") ?? null;
+        const forwarded = req.headers.get("x-forwarded-for");
+        const ip = forwarded ? forwarded.split(",")[0].trim() : null;
 
         const supabase = createClient(
             process.env.NEXT_PUBLIC_SUPABASE_URL!,
             process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
         );
 
-        await supabase.from("link_visits").insert({ param, visitor_id, country, city });
+        await supabase.from("link_visits").insert({ param, visitor_id, country, city, ip });
 
         return NextResponse.json({ ok: true });
     } catch {
