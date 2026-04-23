@@ -45,8 +45,8 @@ export default function Page() {
 
             {/* Slow subtle zoom */}
             <MotionDiv
-              initial={{ scale: 0.6 }}
-              animate={{ scale: [0.6, 0.7] }}
+              initial={{ scale: 0.85 }}
+              animate={{ scale: [0.85, 0.95] }}
               transition={{
                 duration: 5,
                 ease: "easeInOut",
@@ -60,7 +60,7 @@ export default function Page() {
                 alt="Wedding"
                 fill
                 priority
-                className="object-cover"
+                className="object-contain"
               />
             </MotionDiv>
 
