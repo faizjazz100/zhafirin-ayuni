@@ -9,8 +9,7 @@ export default function LinkTracker() {
     const searchParams = useSearchParams();
 
     useEffect(() => {
-        const param = TRACKED_PARAMS.find((p) => searchParams.has(p));
-        if (!param) return;
+        const param = TRACKED_PARAMS.find((p) => searchParams.has(p)) ?? "direct";
 
         const cooldownKey = `lv_last_${param}`;
         const last = Number(localStorage.getItem(cooldownKey) ?? 0);
