@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 
-const TRACKED_PARAMS = ["wedding"];
+const TRACKED_PARAMS = ["wedding", "session1"];
 
 export default function LinkTracker() {
     const searchParams = useSearchParams();

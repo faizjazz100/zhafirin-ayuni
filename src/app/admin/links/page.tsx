@@ -2,7 +2,10 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { supabase } from "@/lib/supabase";
+
+const VisitorMap = dynamic(() => import("./VisitorMap"), { ssr: false });
 
 type Visit = {
     id: string;
@@ -11,6 +14,9 @@ type Visit = {
     country: string | null;
     city: string | null;
     ip: string | null;
+    device: string | null;
+    lat: number | null;
+    lng: number | null;
     created_at: string;
 };
 
@@ -21,13 +27,17 @@ type ParamStat = {
     countries: { country: string; count: number }[];
 };
 
-type VisitorStat = {
+type IpGroup = {
+    key: string;
+    ip: string | null;
     visitor_id: string;
-    visits: number;
     country: string | null;
     city: string | null;
-    ip: string | null;
-    last_seen: string;
+    device: string | null;
+    lat: number | null;
+    lng: number | null;
+    params: string[];
+    visits: Visit[];
 };
 
 type VisitorLabels = Record<string, string>;
@@ -42,6 +52,12 @@ function timeAgo(iso: string) {
     return `${Math.floor(hrs / 24)}d ago`;
 }
 
+function fmtDate(iso: string) {
+    return new Date(iso).toLocaleString("en-MY", {
+        day: "numeric", month: "short", hour: "2-digit", minute: "2-digit",
+    });
+}
+
 const FLAG: Record<string, string> = {};
 function countryFlag(code: string | null) {
     if (!code) return "🌐";
@@ -52,20 +68,25 @@ function countryFlag(code: string | null) {
         );
         FLAG[code] = flag;
         return flag;
-    } catch {
-        return "🌐";
-    }
+    } catch { return "🌐"; }
 }
 
-function VisitorRow({
-    v,
-    label,
-    onSaveLabel,
-}: {
-    v: VisitorStat;
+const DEVICE_ICON: Record<string, string> = { mobile: "📱", tablet: "📱", desktop: "🖥️" };
+
+function ParamBadge({ param }: { param: string }) {
+    return (
+        <span className="inline-flex items-center rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-mono font-medium text-zinc-600">
+            {param === "direct" ? "/" : `?${param}`}
+        </span>
+    );
+}
+
+function VisitorRow({ group, label, onSaveLabel }: {
+    group: IpGroup;
     label: string | undefined;
     onSaveLabel: (visitorId: string, name: string) => Promise<void>;
 }) {
+    const [open, setOpen] = useState(false);
     const [editing, setEditing] = useState(false);
     const [input, setInput] = useState(label ?? "");
     const [saving, setSaving] = useState(false);
@@ -74,63 +95,85 @@ function VisitorRow({
         const trimmed = input.trim();
         if (!trimmed) return;
         setSaving(true);
-        await onSaveLabel(v.visitor_id, trimmed);
+        await onSaveLabel(group.visitor_id, trimmed);
         setSaving(false);
         setEditing(false);
     }
 
+    const lastVisit = group.visits[0];
+
     return (
-        <div className="flex items-center gap-3 px-5 py-3">
-            <span className="text-lg shrink-0">{countryFlag(v.country)}</span>
-            <div className="flex-1 min-w-0">
-                {editing ? (
-                    <div className="flex items-center gap-2">
-                        <input
-                            autoFocus
-                            value={input}
-                            onChange={(e) => setInput(e.target.value)}
-                            onKeyDown={(e) => { if (e.key === "Enter") handleSave(); if (e.key === "Escape") setEditing(false); }}
-                            placeholder="Enter name…"
-                            className="flex-1 rounded-xl border border-black/10 bg-zinc-50 px-3 py-1.5 text-sm outline-none focus:border-[#7A0022]/30 focus:ring-2 focus:ring-[#7A0022]/10"
-                        />
-                        <button
-                            onClick={handleSave}
-                            disabled={saving || !input.trim()}
-                            className="rounded-xl bg-[#7A0022] px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50 transition"
-                        >
-                            {saving ? "…" : "Save"}
-                        </button>
-                        <button
-                            onClick={() => { setEditing(false); setInput(label ?? ""); }}
-                            className="rounded-xl border border-black/10 px-3 py-1.5 text-xs text-zinc-500 transition hover:bg-zinc-50"
-                        >
-                            Cancel
-                        </button>
+        <div>
+            <div className="flex items-center gap-3 px-5 py-3">
+                <span className="text-lg shrink-0">{countryFlag(group.country)}</span>
+                <div className="flex-1 min-w-0">
+                    {editing ? (
+                        <div className="flex items-center gap-2">
+                            <input
+                                autoFocus
+                                value={input}
+                                onChange={(e) => setInput(e.target.value)}
+                                onKeyDown={(e) => { if (e.key === "Enter") handleSave(); if (e.key === "Escape") setEditing(false); }}
+                                placeholder="Enter name…"
+                                className="flex-1 rounded-xl border border-black/10 bg-zinc-50 px-3 py-1.5 text-sm outline-none focus:border-[#7A0022]/30 focus:ring-2 focus:ring-[#7A0022]/10"
+                            />
+                            <button onClick={handleSave} disabled={saving || !input.trim()} className="rounded-xl bg-[#7A0022] px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50 transition">
+                                {saving ? "…" : "Save"}
+                            </button>
+                            <button onClick={() => { setEditing(false); setInput(label ?? ""); }} className="rounded-xl border border-black/10 px-3 py-1.5 text-xs text-zinc-500 transition hover:bg-zinc-50">
+                                Cancel
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="flex flex-wrap items-center gap-1.5">
+                            <span className="text-base" title={group.device ?? "desktop"}>
+                                {DEVICE_ICON[group.device ?? "desktop"] ?? "🖥️"}
+                            </span>
+                            {label
+                                ? <span className="text-sm font-semibold text-zinc-900">{label}</span>
+                                : <span className="text-sm font-mono text-zinc-500">{group.ip ?? `${group.visitor_id.slice(0, 8)}…`}</span>
+                            }
+                            {group.city && <span className="text-xs text-zinc-400">{group.city}{group.country ? `, ${group.country}` : ""}</span>}
+                            {!group.city && group.country && <span className="text-xs text-zinc-400">{group.country}</span>}
+                            <button onClick={() => { setEditing(true); setInput(label ?? ""); }} className="text-[10px] font-medium text-[#7A0022]/60 hover:text-[#7A0022] transition">
+                                {label ? "rename" : "name"}
+                            </button>
+                        </div>
+                    )}
+                    {!editing && (
+                        <div className="mt-1 flex flex-wrap items-center gap-1">
+                            {group.params.map((p) => <ParamBadge key={p} param={p} />)}
+                            <span className="text-[10px] text-zinc-400 ml-0.5">· last {timeAgo(lastVisit.created_at)}</span>
+                        </div>
+                    )}
+                </div>
+                <div className="flex items-center gap-3 shrink-0">
+                    <div className="text-right">
+                        <p className="text-lg font-bold text-zinc-900">{group.visits.length}</p>
+                        <p className="text-[10px] uppercase tracking-widest text-zinc-400">visit{group.visits.length !== 1 ? "s" : ""}</p>
                     </div>
-                ) : (
-                    <div className="flex items-center gap-2 flex-wrap">
-                        {label ? (
-                            <p className="text-sm font-semibold text-zinc-900">{label}</p>
-                        ) : (
-                            <p className="text-sm font-medium text-zinc-500 font-mono">{v.visitor_id.slice(0, 8)}…</p>
-                        )}
-                        {v.city && <span className="text-xs text-zinc-400">{v.city}{v.country ? `, ${v.country}` : ""}</span>}
-                        {!v.city && v.country && <span className="text-xs text-zinc-400">{v.country}</span>}
-                        <button
-                            onClick={() => { setEditing(true); setInput(label ?? ""); }}
-                            className="text-[10px] font-medium text-[#7A0022]/60 hover:text-[#7A0022] transition"
-                        >
-                            {label ? "rename" : "name"}
-                        </button>
-                    </div>
-                )}
-                {!editing && v.ip && <p className="text-xs text-zinc-400 font-mono">{v.ip}</p>}
-                {!editing && <p className="text-xs text-zinc-400">last seen {timeAgo(v.last_seen)}</p>}
+                    <button
+                        onClick={() => setOpen((v) => !v)}
+                        className="flex h-7 w-7 items-center justify-center rounded-full border border-black/10 bg-zinc-50 text-zinc-400 hover:bg-zinc-100 transition"
+                    >
+                        <svg className={`h-3.5 w-3.5 transition-transform ${open ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+                </div>
             </div>
-            <div className="text-right shrink-0">
-                <p className="text-lg font-bold text-zinc-900">{v.visits}</p>
-                <p className="text-[10px] uppercase tracking-widest text-zinc-400">visit{v.visits !== 1 ? "s" : ""}</p>
-            </div>
+
+            {open && (
+                <div className="border-t border-black/5 bg-zinc-50/80 px-5 py-2 space-y-1.5">
+                    {group.visits.map((v) => (
+                        <div key={v.id} className="flex items-center gap-2 text-xs text-zinc-500">
+                            <span>{DEVICE_ICON[v.device ?? "desktop"] ?? "🖥️"}</span>
+                            <ParamBadge param={v.param} />
+                            <span className="text-zinc-400">{fmtDate(v.created_at)}</span>
+                        </div>
+                    ))}
+                </div>
+            )}
         </div>
     );
 }
@@ -181,24 +224,29 @@ export default function AdminLinksPage() {
         })).sort((a, b) => b.unique - a.unique);
     })();
 
-    const visitorStats: VisitorStat[] = (() => {
-        const map: Record<string, { visits: number; country: string | null; city: string | null; ip: string | null; last_seen: string }> = {};
+    const ipGroups: IpGroup[] = (() => {
+        const map: Record<string, IpGroup> = {};
         for (const v of visits) {
-            if (!map[v.visitor_id]) {
-                map[v.visitor_id] = { visits: 0, country: v.country, city: v.city, ip: v.ip, last_seen: v.created_at };
+            const key = v.ip ?? v.visitor_id;
+            if (!map[key]) {
+                map[key] = { key, ip: v.ip, visitor_id: v.visitor_id, country: v.country, city: v.city, device: v.device, lat: v.lat, lng: v.lng, params: [], visits: [] };
             }
-            map[v.visitor_id].visits++;
-            if (v.created_at > map[v.visitor_id].last_seen) {
-                map[v.visitor_id].last_seen = v.created_at;
-                map[v.visitor_id].country = v.country;
-                map[v.visitor_id].city = v.city;
-                map[v.visitor_id].ip = v.ip;
-            }
+            map[key].visits.push(v);
+            if (!map[key].params.includes(v.param)) map[key].params.push(v.param);
         }
-        return Object.entries(map)
-            .map(([visitor_id, d]) => ({ visitor_id, ...d }))
-            .sort((a, b) => b.visits - a.visits);
+        return Object.values(map).sort((a, b) =>
+            new Date(b.visits[0].created_at).getTime() - new Date(a.visits[0].created_at).getTime()
+        );
     })();
+
+    const mapMarkers = ipGroups
+        .filter((g) => g.lat !== null && g.lng !== null)
+        .map((g) => ({
+            lat: g.lat!,
+            lng: g.lng!,
+            label: labels[g.visitor_id] ?? g.ip ?? g.visitor_id.slice(0, 8),
+            device: g.device,
+        }));
 
     const recent = visits.slice(0, 30);
 
@@ -215,9 +263,7 @@ export default function AdminLinksPage() {
                         <p className="text-[11px] font-semibold uppercase tracking-[0.34em] text-[#7A0022]/80">Admin</p>
                         <h1 className="mt-1 font-serif text-3xl font-semibold text-zinc-900 sm:text-4xl">Link Visitors</h1>
                         <p className="mt-1 text-sm text-zinc-500">
-                            {lastRefresh
-                                ? `Updated ${lastRefresh.toLocaleTimeString("en-MY", { hour: "2-digit", minute: "2-digit" })}`
-                                : "Loading…"}
+                            {lastRefresh ? `Updated ${lastRefresh.toLocaleTimeString("en-MY", { hour: "2-digit", minute: "2-digit" })}` : "Loading…"}
                         </p>
                     </div>
                     <div className="flex gap-2 shrink-0">
@@ -235,6 +281,18 @@ export default function AdminLinksPage() {
                         </button>
                     </div>
                 </div>
+
+                {/* Map */}
+                {!loading && mapMarkers.length > 0 && (
+                    <section className="mb-8">
+                        <div className="mb-3 flex items-center gap-3">
+                            <p className="text-xs font-semibold uppercase tracking-widest text-zinc-400">Map</p>
+                            <span className="h-px flex-1 bg-black/8" />
+                            <span className="text-[10px] text-zinc-400">{mapMarkers.length} located</span>
+                        </div>
+                        <VisitorMap markers={mapMarkers} />
+                    </section>
+                )}
 
                 {/* Per-link stats */}
                 <section className="mb-8">
@@ -284,17 +342,17 @@ export default function AdminLinksPage() {
                     )}
                 </section>
 
-                {/* Per-visitor breakdown */}
-                {!loading && visitorStats.length > 0 && (
+                {/* Visitors grouped by IP */}
+                {!loading && ipGroups.length > 0 && (
                     <section className="mb-8">
                         <div className="mb-3 flex items-center gap-3">
                             <p className="text-xs font-semibold uppercase tracking-widest text-zinc-400">Visitors</p>
                             <span className="h-px flex-1 bg-black/8" />
-                            <span className="text-[10px] text-zinc-400">{visitorStats.length} unique</span>
+                            <span className="text-[10px] text-zinc-400">{ipGroups.length} unique</span>
                         </div>
                         <div className="divide-y divide-black/5 overflow-hidden rounded-2xl border border-black/8 bg-white/80">
-                            {visitorStats.map((v) => (
-                                <VisitorRow key={v.visitor_id} v={v} label={labels[v.visitor_id]} onSaveLabel={saveLabel} />
+                            {ipGroups.map((g) => (
+                                <VisitorRow key={g.key} group={g} label={labels[g.visitor_id]} onSaveLabel={saveLabel} />
                             ))}
                         </div>
                     </section>
@@ -313,12 +371,15 @@ export default function AdminLinksPage() {
                                     <span className="text-lg shrink-0">{countryFlag(v.country)}</span>
                                     <div className="flex-1 min-w-0">
                                         <p className="text-sm font-medium text-zinc-800">
+                                            <span className="mr-1">{DEVICE_ICON[v.device ?? "desktop"] ?? "🖥️"}</span>
                                             <span className="font-mono text-[#7A0022]">{v.param === "direct" ? "/" : `/?${v.param}`}</span>
                                             {v.city && <span className="ml-2 font-normal text-zinc-500">{v.city}{v.country ? `, ${v.country}` : ""}</span>}
                                             {!v.city && v.country && <span className="ml-2 font-normal text-zinc-500">{v.country}</span>}
                                         </p>
                                         <p className="text-xs text-zinc-400 font-mono">
-                                            {labels[v.visitor_id] ? <span className="not-italic font-sans font-medium text-zinc-600">{labels[v.visitor_id]} · </span> : `${v.visitor_id.slice(0, 8)}… · `}
+                                            {labels[v.visitor_id]
+                                                ? <span className="not-italic font-sans font-medium text-zinc-600">{labels[v.visitor_id]} · </span>
+                                                : `${v.visitor_id.slice(0, 8)}… · `}
                                             {v.ip ? `${v.ip} · ` : ""}{timeAgo(v.created_at)}
                                         </p>
                                     </div>
