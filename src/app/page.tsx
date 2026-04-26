@@ -19,7 +19,7 @@ export default function Page() {
   const HASHTAG = "#ZHAFYUNI";
   const COUPLE = "Zhafirin & Ayuni";
   const SUBLINE = "Hacienda A-Park, Puchong, Selangor";
-  const RSVP_DEADLINE = "24 April 2026";
+  const RSVP_DEADLINE = "30 April 2026";
 
 
 
