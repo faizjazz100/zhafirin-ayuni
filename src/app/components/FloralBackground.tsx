@@ -1,6 +1,6 @@
 export default function FloralBackground() {
     return (
-        <div className="pointer-events-none fixed inset-0" style={{ zIndex: -1, transform: "translateZ(0)", willChange: "transform" }} aria-hidden="true">
+        <div className="pointer-events-none fixed inset-0" style={{ zIndex: -1, transform: "translateZ(0)" }} aria-hidden="true">
             <svg
                 width="100%"
                 height="100%"

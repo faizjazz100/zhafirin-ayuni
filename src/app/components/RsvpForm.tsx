@@ -137,11 +137,18 @@ export default function RsvpForm({ lockedSession }: Props) {
 
     setSessionAvailability(nextAvailability);
     setLoadingSessions(false);
+    return nextAvailability;
   }
 
   useEffect(() => {
     async function init() {
-      await loadSessionAvailability();
+      const availability = await loadSessionAvailability();
+      if (!lockedSession && availability) {
+        const autoSelect = SESSION_OPTIONS
+          .filter((s) => s !== "Session 1")
+          .find((s) => (availability[s]?.remaining ?? 0) > 0);
+        if (autoSelect) setSelectedSession(autoSelect);
+      }
     }
     init();
   }, []);

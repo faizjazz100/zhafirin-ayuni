@@ -96,7 +96,7 @@ export default function Navbar({
     return (
         <>
             <header className="sticky top-0 z-2001">
-                <div className="bg-[#FBF7F2]/55 backdrop-blur-md">
+                <div className="bg-[#FBF7F2]/92 border-b border-[#7A0022]/8">
                     <div className="mx-auto max-w-5xl px-5 sm:px-6">
                         <div className="relative flex items-center justify-center py-4">
                             {/* Hamburger — mobile/tablet only */}

@@ -30,7 +30,7 @@ export default function Page() {
       {/* Soft background (no Iridescence) */}
       <div className="pointer-events-none fixed inset-0 -z-10">
         <div className="absolute inset-0 bg-[radial-gradient(1200px_800px_at_10%_10%,rgba(122,0,34,0.10),transparent_60%),radial-gradient(900px_700px_at_90%_20%,rgba(176,16,62,0.10),transparent_55%),radial-gradient(900px_700px_at_50%_100%,rgba(0,0,0,0.06),transparent_60%)]" />
-        <div className="absolute inset-0 bg-gradient-to-b from-white/70 via-[#FBF7F2]/55 to-white/80" />
+        <div className="absolute inset-0 bg-linear-to-b from-white/70 via-[#FBF7F2]/55 to-white/80" />
       </div>
 
       {/* HERO IMAGE */}
