@@ -55,6 +55,27 @@ function isValidInternationalPhone(phone: string) {
   return /^\+[1-9]\d{7,14}$/.test(phone);
 }
 
+function FieldLabel({ htmlFor, children }: { htmlFor?: string; children: React.ReactNode }) {
+  return (
+    <label
+      htmlFor={htmlFor}
+      className="block text-[10px] font-semibold uppercase tracking-[0.38em] text-zinc-400"
+    >
+      {children}
+    </label>
+  );
+}
+
+const inputBase =
+  "mt-2 w-full rounded-2xl border border-zinc-200 bg-white px-4 py-3.5 text-sm text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-[#7A0022]/40 focus:ring-2 focus:ring-[#7A0022]/8";
+
+const selectBase =
+  "mt-2 w-full rounded-2xl border border-zinc-200 bg-white px-4 py-3.5 text-sm text-zinc-900 outline-none transition focus:border-[#7A0022]/40 focus:ring-2 focus:ring-[#7A0022]/8";
+
+function SectionDivider() {
+  return <div className="h-px bg-black/5" />;
+}
+
 export default function RsvpForm({ lockedSession }: Props) {
   const router = useRouter();
 
@@ -88,7 +109,6 @@ export default function RsvpForm({ lockedSession }: Props) {
     [guests]
   );
 
-  // Sessions visible in the picker
   const visibleSessions = lockedSession
     ? [lockedSession]
     : SESSION_OPTIONS.filter((s) => s !== "Session 1");
@@ -246,56 +266,73 @@ export default function RsvpForm({ lockedSession }: Props) {
   }
 
   return (
-    <form onSubmit={submit} className="mt-8 space-y-5">
-      <div>
-        <label className="text-sm text-zinc-600">Preferred Name</label>
-        <input
-          className="mt-2 w-full rounded-2xl border border-zinc-200 bg-white p-3.5 outline-none focus:border-zinc-400"
-          value={fullName}
-          onChange={(e) => setFullName(e.target.value)}
-          autoComplete="name"
-          required
-        />
-      </div>
+    <form onSubmit={submit} className="mt-8 space-y-7">
 
-      <div>
-        <label className="text-sm text-zinc-600">Phone Number</label>
-        <input
-          className={[
-            "mt-2 w-full rounded-2xl border bg-white p-3.5 outline-none",
-            phoneError ? "border-red-400 focus:border-red-500" : "border-zinc-200 focus:border-zinc-400",
-          ].join(" ")}
-          value={phone}
-          onChange={(e) => {
-            setPhone(e.target.value);
-            setPhoneError("");
-          }}
-          placeholder="e.g. 0123456789, +60123456789, +6591234567"
-          inputMode="tel"
-          autoComplete="tel"
-          required
-        />
-        {phoneError && <p className="mt-2 text-sm text-red-600">{phoneError}</p>}
-      </div>
-
-      <div>
-        <label className="text-sm text-zinc-600">Guest of</label>
-        <select
-          className="mt-2 w-full rounded-2xl border border-zinc-200 bg-white px-3 py-3 text-sm"
-          value={guestOf}
-          onChange={(e) => setGuestOf(e.target.value as GuestOf)}
-        >
-          <option value="Groom">Groom (Zhafirin)</option>
-          <option value="Bride">Bride (Ayuni)</option>
-        </select>
-      </div>
-
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      {/* Personal info */}
+      <div className="space-y-5">
         <div>
-          <label className="text-sm text-zinc-600">Session</label>
+          <FieldLabel htmlFor="rsvp-name">Preferred Name</FieldLabel>
+          <input
+            id="rsvp-name"
+            className={inputBase}
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            autoComplete="name"
+            aria-required="true"
+            required
+          />
+        </div>
 
+        <div>
+          <FieldLabel htmlFor="rsvp-phone">Phone Number</FieldLabel>
+          <input
+            id="rsvp-phone"
+            className={[
+              inputBase,
+              phoneError ? "border-red-400 focus:border-red-400 focus:ring-red-500/10" : "",
+            ].join(" ")}
+            value={phone}
+            onChange={(e) => {
+              setPhone(e.target.value);
+              setPhoneError("");
+            }}
+            placeholder="e.g. 0123456789 or +60123456789"
+            inputMode="tel"
+            autoComplete="tel"
+            aria-required="true"
+            aria-describedby={phoneError ? "rsvp-phone-error" : undefined}
+            required
+          />
+          {phoneError && (
+            <p id="rsvp-phone-error" className="mt-2 text-xs text-red-600" role="alert">
+              {phoneError}
+            </p>
+          )}
+        </div>
+
+        <div>
+          <FieldLabel htmlFor="rsvp-guest-of">Guest of</FieldLabel>
           <select
-            className="mt-2 w-full rounded-2xl border border-zinc-200 bg-white px-3 py-3 text-sm disabled:bg-zinc-100"
+            id="rsvp-guest-of"
+            className={selectBase}
+            value={guestOf}
+            onChange={(e) => setGuestOf(e.target.value as GuestOf)}
+          >
+            <option value="Groom">Groom (Zhafirin)</option>
+            <option value="Bride">Bride (Ayuni)</option>
+          </select>
+        </div>
+      </div>
+
+      <SectionDivider />
+
+      {/* Session */}
+      <div className="space-y-4">
+        <div>
+          <FieldLabel htmlFor="rsvp-session">Session</FieldLabel>
+          <select
+            id="rsvp-session"
+            className={`${selectBase} disabled:bg-zinc-50 disabled:text-zinc-400`}
             value={selectedSession}
             onChange={(e) => setSelectedSession(e.target.value as Session)}
             disabled={loadingSessions}
@@ -315,7 +352,7 @@ export default function RsvpForm({ lockedSession }: Props) {
           </select>
 
           {!lockedSession && !loadingSessions && (
-            <p className="mt-2 text-xs text-zinc-500">
+            <p className="mt-2 text-xs text-zinc-400">
               Choose a session with enough slots for {guests} guest{guests > 1 ? "s" : ""}.
             </p>
           )}
@@ -328,91 +365,110 @@ export default function RsvpForm({ lockedSession }: Props) {
           )}
         </div>
 
-        <div className="mt-3">
-          <p className="text-sm text-zinc-500">Selected Time</p>
-          <div className="mt-1 inline-flex items-center rounded-full bg-[#7A0022]/10 px-4 py-1.5 text-sm font-medium text-[#7A0022]">
+        {/* Selected time badge */}
+        <div className="flex items-center gap-3">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.38em] text-zinc-400">Selected Time</span>
+          <span className="inline-flex items-center rounded-full bg-[#7A0022]/10 px-3.5 py-1 text-xs font-semibold tracking-wide text-[#7A0022]">
             {SESSION_TIME[selectedSession]}
+          </span>
+        </div>
+      </div>
+
+      <SectionDivider />
+
+      {/* Guests */}
+      <div className="space-y-5">
+        <div>
+          <FieldLabel>Number of Guests</FieldLabel>
+          <div className="mt-2 grid grid-cols-6 gap-2">
+            {guestOptions.map((n) => (
+              <button
+                key={n}
+                type="button"
+                onClick={() => handleGuestsClick(n)}
+                className={[
+                  "rounded-2xl border py-3 text-sm font-medium transition",
+                  guests === n
+                    ? "border-[#7A0022] bg-[#7A0022] text-white shadow-[0_6px_16px_rgba(122,0,34,0.22)]"
+                    : "border-zinc-200 bg-white text-zinc-700 hover:border-zinc-300 hover:bg-zinc-50",
+                ].join(" ")}
+              >
+                {n}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <FieldLabel htmlFor="rsvp-adults">Adults</FieldLabel>
+            <select
+              id="rsvp-adults"
+              className={selectBase}
+              value={adults}
+              onChange={(e) => handleAdultsChange(Number(e.target.value))}
+            >
+              {adultOptions.map((n) => (
+                <option key={n} value={n}>
+                  {n}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <FieldLabel htmlFor="rsvp-kids">
+              Kids <span className="normal-case font-normal tracking-normal text-zinc-300">(auto)</span>
+            </FieldLabel>
+            <input
+              id="rsvp-kids"
+              className="mt-2 w-full cursor-default rounded-2xl border border-zinc-100 bg-zinc-50 px-4 py-3.5 text-sm text-zinc-400 select-none"
+              value={kids}
+              readOnly
+              aria-readonly="true"
+              tabIndex={-1}
+            />
           </div>
         </div>
       </div>
 
+      <SectionDivider />
+
+      {/* Message */}
       <div>
-        <label className="text-sm text-zinc-600">Number of Guests</label>
-        <div className="mt-2 grid grid-cols-5 gap-2">
-          {guestOptions.map((n) => (
-            <button
-              key={n}
-              type="button"
-              onClick={() => handleGuestsClick(n)}
-              className={[
-                "rounded-2xl border px-4 py-3 text-sm transition",
-                guests === n
-                  ? "border-[#7A0022] bg-[#7A0022] text-white"
-                  : "border-zinc-200 bg-white text-zinc-800 hover:bg-zinc-50",
-              ].join(" ")}
-            >
-              {n}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="block text-sm mb-1 text-zinc-600">Adults</label>
-          <select
-            className="w-full rounded-2xl border border-zinc-200 bg-white px-3 py-3 text-sm"
-            value={adults}
-            onChange={(e) => handleAdultsChange(Number(e.target.value))}
-          >
-            {adultOptions.map((n) => (
-              <option key={n} value={n}>
-                {n}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-sm mb-1 text-zinc-600">Kids</label>
-          <input
-            className="w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-3 py-3 text-sm text-zinc-700"
-            value={kids}
-            readOnly
-          />
-        </div>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-zinc-700">
-          Message or wish (optional)
-        </label>
+        <FieldLabel htmlFor="rsvp-message">
+          Message or wish{" "}
+          <span className="normal-case font-normal tracking-normal text-zinc-300">(optional)</span>
+        </FieldLabel>
         <textarea
+          id="rsvp-message"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           rows={4}
           maxLength={400}
-          className="mt-2 w-full rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm outline-none focus:border-zinc-400"
+          className="mt-2 w-full rounded-2xl border border-zinc-200 bg-white px-4 py-3.5 text-sm text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-[#7A0022]/40 focus:ring-2 focus:ring-[#7A0022]/8 resize-none"
           placeholder="Write a short wish..."
         />
-        <p className="mt-1 text-xs text-zinc-500">{message.length}/400</p>
+        <p className="mt-1.5 text-right text-[11px] text-zinc-300" aria-live="polite">
+          {message.length}/400
+        </p>
       </div>
 
+      {/* Submit */}
       <button
         type="submit"
         disabled={submitting || loadingSessions}
-        className={[
-          "w-full rounded-2xl p-3.5 text-white transition",
-          submitting || loadingSessions ? "bg-[#7A0022]" : "bg-[#7A0022] hover:opacity-90",
-        ].join(" ")}
+        className="w-full rounded-full bg-[#7A0022] py-4 text-[11px] font-semibold uppercase tracking-[0.4em] text-white shadow-[0_14px_32px_rgba(122,0,34,0.28)] transition hover:bg-[#64001C] disabled:opacity-60"
       >
         {submitting ? "Submitting..." : loadingSessions ? "Loading sessions..." : "Submit RSVP"}
       </button>
 
       {status && (
         <div
+          role="status"
+          aria-live="polite"
           className={[
-            "rounded-2xl border p-4 text-sm",
+            "flex items-start gap-3 rounded-2xl border p-4 text-sm",
             status.type === "ok"
               ? "border-emerald-200 bg-emerald-50 text-emerald-900"
               : status.type === "err"
@@ -420,8 +476,21 @@ export default function RsvpForm({ lockedSession }: Props) {
                 : "border-zinc-200 bg-white/70 text-zinc-700",
           ].join(" ")}
         >
-          {status.type === "ok" ? "✅ " : status.type === "err" ? "❌ " : "⏳ "}
-          {status.text}
+          {status.type === "ok" ? (
+            <svg className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+            </svg>
+          ) : status.type === "err" ? (
+            <svg className="mt-0.5 h-4 w-4 shrink-0 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+            </svg>
+          ) : (
+            <svg className="mt-0.5 h-4 w-4 shrink-0 animate-spin text-zinc-500" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+            </svg>
+          )}
+          <span>{status.text}</span>
         </div>
       )}
     </form>

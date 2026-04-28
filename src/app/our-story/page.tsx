@@ -2,267 +2,228 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { motion, AnimatePresence } from "framer-motion";
-import { useEffect, useRef, useState } from "react";
-import PageContainer from "@/src/app/components/PageContainer";
+import { motion } from "framer-motion";
 import FloralBackground from "@/src/app/components/FloralBackground";
-import { supabase } from "@/lib/supabase";
+import { alexBrush } from "@/lib/fonts";
 
-function StoryLike() {
-    const [count, setCount] = useState(0);
-    const [liked, setLiked] = useState(false);
-    const [isAdmin, setIsAdmin] = useState(false);
-    const [showInput, setShowInput] = useState(false);
-    const [phone, setPhone] = useState("");
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState("");
-    const inputRef = useRef<HTMLInputElement>(null);
+// ─── Story chapters ───────────────────────────────────────────────────────────
 
-    useEffect(() => {
-        supabase.from("story_likes").select("id", { count: "exact" }).then(({ count: c }) => {
-            setCount(c ?? 0);
-        });
-        if (localStorage.getItem("story_liked_phone")) setLiked(true);
-        if (localStorage.getItem("zh_admin")) setIsAdmin(true);
-    }, []);
+const chapters = [
+  {
+    num: "I",
+    heading: "First Crossings",
+    body: `They met two years ago on the same working pathway, where their daily routines crossed without much thought. Both were focused on their careers, exchanging nothing more than brief greetings and occasional smiles, friendly acquaintances in a busy world.`,
+  },
+  {
+    num: "II",
+    heading: "Growing Closer",
+    body: `Over time, casual hellos turned into conversations, then shared lunches, and eventually a steady friendship. They supported one another through work challenges and personal struggles, becoming a constant presence in each othes’s lives. Yet, quietly and unspoken, one of them wished for something more. A love that felt close, but still just out of reach.`,
+  },
+  {
+    num: "III",
+    heading: "A Whispered Prayer",
+    body: `One evening, after a particularly difficult day, a heartfelt prayer was whispered. The wish was simple but sincere: to find someone who could be more than a friend, someone truly meant to stay. Unknowingly, the answer to that prayer had already been standing right beside them all along.`,
+  },
+  {
+    num: "IV",
+    heading: "Something More",
+    body: `As the seasons changed, so did their feelings. What began as friendship slowly blossomed into love. Built on trust, understanding, and the comfort of truly knowing one another. The person who was once just a companion on the same working path became the most important part of their life, a blessing quietly granted by an answered prayer.`,
+  },
+  {
+    num: "V",
+    heading: "A Beautiful Beginning",
+    body: `In the end, their love story was not shaped by grand gestures or sudden sparks, but by the gentle and steady growth of two hearts finding their way to each other, proving that sometimes, the most beautiful love stories begin as friendships and bloom when least expected.`,
+  },
+];
 
-    function clearLike() {
-        localStorage.removeItem("story_liked_phone");
-        setLiked(false);
-        setShowInput(false);
-        setPhone("");
-        setError("");
-    }
+// ─── Ornamental divider ───────────────────────────────────────────────────────
 
-    useEffect(() => {
-        if (showInput) setTimeout(() => {
-            inputRef.current?.focus();
-            inputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-        }, 100);
-    }, [showInput]);
-
-    async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
-        e.preventDefault();
-        const cleaned = phone.trim().replace(/\s+/g, "");
-        if (!cleaned) return;
-        setLoading(true);
-        setError("");
-        const { error: err } = await supabase.from("story_likes").insert({ phone: cleaned });
-        setLoading(false);
-        if (err) {
-            if (err.code === "23505") {
-                setError("This number has already liked the story.");
-            } else {
-                setError("Something went wrong. Try again.");
-            }
-            return;
-        }
-        localStorage.setItem("story_liked_phone", cleaned);
-        setLiked(true);
-        setShowInput(false);
-        setCount((c) => c + 1);
-    }
-
-    return (
-        <div className="mt-10 flex flex-col items-center gap-3">
-            <button
-                onClick={() => { if (!liked) setShowInput(true); }}
-                disabled={liked}
-                className={`group flex items-center gap-2 rounded-full px-6 py-3 text-sm font-medium transition ${
-                    liked
-                        ? "bg-rose-50 text-rose-500 border border-rose-200 cursor-default"
-                        : "bg-white/80 border border-black/10 text-zinc-700 hover:border-rose-300 hover:text-rose-500 hover:bg-rose-50"
-                }`}
-            >
-                <svg
-                    className={`h-4 w-4 transition-transform ${liked ? "scale-110" : "group-hover:scale-110"}`}
-                    fill={liked ? "currentColor" : "none"}
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                </svg>
-                {liked ? "Liked!" : "Like this story"}
-                <span className="ml-1 text-xs opacity-60">{count}</span>
-            </button>
-
-            {isAdmin && liked && (
-                <button
-                    type="button"
-                    onClick={clearLike}
-                    className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs text-zinc-400 hover:text-red-500 hover:border-red-200 transition"
-                >
-                    Reset (admin)
-                </button>
-            )}
-
-            {showInput && (
-                <form
-                    onSubmit={handleSubmit}
-                    className="w-full max-w-xs rounded-2xl border border-black/10 bg-white p-4 shadow-lg"
-                >
-                    <p className="mb-3 text-center text-xs text-zinc-500">Enter your phone number to like</p>
-                    <input
-                        ref={inputRef}
-                        type="tel"
-                        inputMode="numeric"
-                        value={phone}
-                        onChange={(e) => { setPhone(e.target.value); setError(""); }}
-                        placeholder="e.g. 0123456789"
-                        className="w-full rounded-xl border border-black/10 bg-zinc-50 px-4 py-3 text-base outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
-                    />
-                    {error && <p className="mt-2 text-center text-xs text-red-500">{error}</p>}
-                    <button
-                        type="submit"
-                        disabled={loading || !phone.trim()}
-                        className="mt-3 w-full rounded-xl bg-rose-500 py-3 text-sm font-semibold text-white disabled:opacity-50 transition"
-                    >
-                        {loading ? "Submitting…" : "Like ♥"}
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => { setShowInput(false); setError(""); }}
-                        className="mt-2 w-full py-1 text-sm text-zinc-400"
-                    >
-                        Cancel
-                    </button>
-                </form>
-            )}
-        </div>
-    );
+function Ornament({ className = "" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 140 20"
+      className={`mx-auto h-4 w-32 text-[#7A0022]/28 ${className}`}
+      fill="none"
+      aria-hidden="true"
+    >
+      <line x1="0" y1="10" x2="52" y2="10" stroke="currentColor" strokeWidth="0.8" />
+      <line x1="88" y1="10" x2="140" y2="10" stroke="currentColor" strokeWidth="0.8" />
+      <circle cx="24" cy="10" r="1.8" fill="currentColor" fillOpacity="0.35" />
+      <circle cx="116" cy="10" r="1.8" fill="currentColor" fillOpacity="0.35" />
+      <circle cx="42" cy="10" r="1.2" fill="currentColor" fillOpacity="0.25" />
+      <circle cx="98" cy="10" r="1.2" fill="currentColor" fillOpacity="0.25" />
+      <ellipse cx="70" cy="10" rx="9" ry="3.5" fill="currentColor" fillOpacity="0.4" />
+      <ellipse cx="70" cy="10" rx="4.5" ry="1.8" fill="currentColor" fillOpacity="0.55" />
+      <circle cx="70" cy="10" r="1.8" fill="currentColor" />
+    </svg>
+  );
 }
 
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
 export default function OurStoryPage() {
-    return (
-        <main className="min-h-screen text-zinc-800">
-            <FloralBackground />
-            {/* Soft background (matches home) */}
-            <div className="pointer-events-none fixed inset-0 -z-10">
-                <div className="absolute inset-0 bg-[radial-gradient(1200px_800px_at_10%_10%,rgba(122,0,34,0.10),transparent_60%),radial-gradient(900px_700px_at_90%_20%,rgba(176,16,62,0.08),transparent_55%),radial-gradient(900px_700px_at_50%_100%,rgba(0,0,0,0.06),transparent_60%)]" />
-                <div className="absolute inset-0 bg-gradient-to-b from-white/70 via-[#FBF7F2]/55 to-white/80" />
+  return (
+    <main className="min-h-screen text-zinc-800 selection:bg-[#7A0022]/15">
+      <FloralBackground />
+
+      {/* Background */}
+      <div className="pointer-events-none fixed inset-0 -z-10">
+        <div className="absolute inset-0 bg-[radial-gradient(1200px_800px_at_10%_10%,rgba(122,0,34,0.07),transparent_60%),radial-gradient(900px_700px_at_90%_20%,rgba(176,16,62,0.06),transparent_55%)]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#FBF7F2] via-[#FBF7F2] to-white" />
+      </div>
+
+      {/* ── Header ── */}
+      <motion.header
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+        className="pt-20 pb-10 text-center px-5 sm:pt-28 sm:pb-12"
+      >
+        <p className="text-[10px] font-semibold uppercase tracking-[0.52em] text-[#7A0022]/60">
+          Our Story
+        </p>
+
+        <h1 className="mt-2 font-serif text-[clamp(2.4rem,8vw,4rem)] font-semibold leading-tight tracking-tight text-zinc-900">
+          #ZHAFYUNI
+        </h1>
+
+        <div className="mx-auto mt-4 flex items-center justify-center gap-3">
+          <div className="h-px w-10 bg-[#7A0022]/14" />
+          <div className="h-[5px] w-[5px] rotate-45 bg-[#7A0022]/30" />
+          <div className="h-px w-10 bg-[#7A0022]/14" />
+        </div>
+
+        <p className="mx-auto mt-4 max-w-[34ch] text-[13px] leading-relaxed text-zinc-500">
+          A journey that began quietly, and grew into something beautiful.
+        </p>
+      </motion.header>
+
+      {/* ── Hero photo ── */}
+      <motion.div
+        initial={{ opacity: 0, y: 14 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, delay: 0.18, ease: [0.22, 1, 0.36, 1] }}
+        className="mx-auto max-w-xl px-5 sm:px-6"
+      >
+        <div className="relative overflow-hidden rounded-[24px] shadow-[0_24px_64px_rgba(0,0,0,0.13)]">
+          <Image
+            src="/couple.jpeg"
+            alt="Zhafirin and Ayuni"
+            width={900}
+            height={600}
+            className="w-full object-cover"
+            priority
+          />
+          <div className="pointer-events-none absolute inset-0 rounded-[24px] ring-1 ring-inset ring-black/8" />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/4 bg-gradient-to-t from-black/15 to-transparent" />
+        </div>
+        <p className="mt-2.5 text-center text-[11px] tracking-[0.22em] text-zinc-400">
+          Zhafirin & Ayuni
+        </p>
+      </motion.div>
+
+      {/* ── Story body ── */}
+      <div className="mx-auto max-w-xl px-5 pb-24 pt-10 sm:px-6">
+
+        {/* White card wrapping all story content */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.55, delay: 0.3, ease: "easeOut" }}
+          className="overflow-hidden rounded-[28px] border border-white/60 bg-white px-7 py-9 shadow-[0_32px_80px_rgba(0,0,0,0.12),0_0_0_1px_rgba(122,0,34,0.05)] sm:px-10 sm:py-11"
+        >
+
+        {chapters.map((chapter, i) => (
+          <motion.div
+            key={chapter.num}
+            initial={{ opacity: 0, y: 14 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-70px" }}
+            transition={{ duration: 0.55, ease: "easeOut" }}
+          >
+            {/* Pull quote — before chapter IV */}
+            {i === 3 && (
+              <figure className="mb-12 px-1 sm:px-4">
+                <blockquote className="border-l-2 border-[#7A0022]/25 pl-5">
+                  <p
+                    className={`${alexBrush.className} text-[1.65rem] leading-snug text-[#7A0022]/75 sm:text-[2rem]`}
+                  >
+                    &quot;The answer to that prayer had already been standing right beside them all along.&quot;
+                  </p>
+                </blockquote>
+              </figure>
+            )}
+
+            {/* Chapter */}
+            <div className={i < chapters.length - 1 ? "mb-12" : "mb-8"}>
+              <p className="text-[9px] font-semibold uppercase tracking-[0.5em] text-[#7A0022]/50">
+                Chapter {chapter.num}
+              </p>
+              <h2 className="mt-1.5 font-serif text-xl font-semibold text-zinc-900 sm:text-2xl">
+                {chapter.heading}
+              </h2>
+              <p className="mt-4 text-[15px] leading-[1.85] text-zinc-600">
+                {chapter.body}
+              </p>
             </div>
 
-            <PageContainer floral>
-                <motion.article
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.45, ease: "easeOut" }}
-                    className="rounded-[28px] border border-white/55 bg-white/65 p-6 shadow-[0_20px_70px_rgba(0,0,0,0.10)] sm:p-10"
-                >
-                    <header className="text-center">
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.34em] text-[#7A0022]/80">
-                            Our Story
-                        </p>
+            {/* Ornamental divider between chapters */}
+            {i < chapters.length - 1 && (
+              <div className="mb-12">
+                <Ornament />
+              </div>
+            )}
+          </motion.div>
+        ))}
 
-                        <h1 className="mt-2 font-serif text-4xl font-semibold text-zinc-900 sm:text-5xl">
-                            #ZHAFYUNI
-                        </h1>
+        {/* Closing */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.7 }}
+          className="mt-4 mb-14 text-center"
+        >
+          <Ornament className="mb-5" />
+          <p className="font-serif text-sm italic text-zinc-400">
+            2 May 2026 · Hacienda A-Park, Puchong
+          </p>
+          <p
+            className={`${alexBrush.className} mt-1 text-2xl text-[#7A0022]/60`}
+          >
+            #ZHAFYUNI
+          </p>
+        </motion.div>
 
-                        <p className="mx-auto mt-3 max-w-2xl text-sm text-zinc-600">
-                            A journey that began quietly, and grew into something beautiful.
-                        </p>
+        </motion.div> {/* end white card */}
 
-                        <div className="mx-auto mt-6 h-px w-24 bg-black/10" />
-                    </header>
+        {/* Actions */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center"
+        >
+          <Link
+            href="/"
+            className="inline-flex items-center justify-center rounded-full border border-black/10 bg-white/85 px-6 py-3 text-sm font-medium text-zinc-900 backdrop-blur transition hover:bg-white"
+          >
+            ← Back to Home
+          </Link>
+          <Link
+            href="/rsvp"
+            className="inline-flex items-center justify-center rounded-full bg-[#7A0022] px-8 py-3 text-sm font-semibold tracking-[0.12em] text-white shadow-[0_14px_32px_rgba(122,0,34,0.28)] transition hover:bg-[#64001C]"
+          >
+            RSVP Now
+          </Link>
+        </motion.div>
 
-                    {/* Couple Photo */}
-                    <div className="mx-auto mt-8 max-w-lg">
-                        <div className="relative overflow-hidden rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)]">
-                            <Image
-                                src="/couple.jpeg"
-                                alt="Zhafirin & Ayuni"
-                                width={800}
-                                height={600}
-                                className="w-full object-cover"
-                                priority
-                            />
-                            {/* Subtle vignette overlay */}
-                            <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-inset ring-black/10" />
-                        </div>
-                        <p className="mt-2 text-center text-xs text-zinc-400 tracking-wide">
-                            Zhafirin & Ayuni
-                        </p>
-                    </div>
+        <p className="mt-8 text-center text-xs text-zinc-400">
+          © {new Date().getFullYear()} Zhafirin & Ayuni
+        </p>
 
-                    {/* Story body */}
-                    <div className="mx-auto mt-8 max-w-3xl">
-                        <div className="mt-6 space-y-6 text-[15px] leading-relaxed text-zinc-700">
-                            <p>
-                                They met two years ago on the same working pathway, where their daily
-                                routines crossed without much thought. Both were focused on their
-                                careers, exchanging nothing more than brief greetings and occasional
-                                smiles, friendly acquaintances in a busy world.
-                            </p>
-
-                            <div className="h-px w-full bg-black/10" />
-
-                            <p>
-                                Over time, casual hellos turned into conversations, then shared
-                                lunches, and eventually a steady friendship. They supported one
-                                another through work challenges and personal struggles, becoming a
-                                constant presence in each othes&apos;s lives. Yet, quietly and unspoken,
-                                one of them wished for something more. A love that felt close, but
-                                still just out of reach.
-                            </p>
-
-                            <div className="h-px w-full bg-black/10" />
-
-                            <p>
-                                One evening, after a particularly difficult day, a heartfelt prayer
-                                was whispered. The wish was simple but sincere: to find someone who
-                                could be more than a friend, someone truly meant to stay. Unknowingly,
-                                the answer to that prayer had already been standing right beside them
-                                all along.
-                            </p>
-
-                            <div className="h-px w-full bg-black/10" />
-
-                            <p>
-                                As the seasons changed, so did their feelings. What began as
-                                friendship slowly blossomed into love. Built on trust,
-                                understanding, and the comfort of truly knowing one another. The
-                                person who was once just a companion on the same working path became
-                                the most important part of their life, a blessing quietly granted by
-                                an answered prayer.
-                            </p>
-
-                            <div className="h-px w-full bg-black/10" />
-
-                            <p>
-                                In the end, their love story was not shaped by grand gestures or
-                                sudden sparks, but by the gentle and steady growth of two hearts
-                                finding their way to each other, proving that sometimes, the most
-                                beautiful love stories begin as friendships and bloom when least
-                                expected.
-                            </p>
-                        </div>
-                    </div>
-
-                    {/* <StoryLike /> */}
-
-                    {/* Actions */}
-                    <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:justify-center">
-                        <Link
-                            href="/"
-                            className="inline-flex items-center justify-center rounded-2xl border border-black/10 bg-white/85 px-5 py-3 text-sm text-zinc-900 hover:bg-white"
-                        >
-                            Back to Home
-                        </Link>
-
-                        <Link
-                            href="/rsvp"
-                            className="inline-flex items-center justify-center rounded-2xl bg-[#7A0022] px-5 py-3 text-sm font-medium text-white shadow-[0_12px_26px_rgba(122,0,34,0.18)] hover:bg-[#64001C]"
-                        >
-                            RSVP
-                        </Link>
-                    </div>
-
-                    <p className="mt-6 text-center text-sm text-zinc-600">
-                        © {new Date().getFullYear()} Zhafirin & Ayuni
-                    </p>
-                </motion.article>
-            </PageContainer>
-        </main>
-    );
+      </div>
+    </main>
+  );
 }
