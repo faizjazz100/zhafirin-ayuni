@@ -97,12 +97,6 @@ export default function SessionPage() {
           >
             ← Back to Home
           </Link>
-          <Link
-            href="/rsvp"
-            className="inline-flex items-center justify-center rounded-full bg-[#7A0022] px-8 py-3 text-sm font-semibold tracking-[0.12em] text-white shadow-[0_14px_32px_rgba(122,0,34,0.28)] transition hover:bg-[#64001C]"
-          >
-            RSVP Now
-          </Link>
         </motion.div>
 
         <p className="mt-8 text-center text-xs text-zinc-400">
