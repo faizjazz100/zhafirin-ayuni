@@ -47,7 +47,7 @@ export default function LoginClient() {
 
                 <form onSubmit={signIn} className="mt-6 space-y-3">
                     <input
-                        className="w-full rounded-2xl border border-zinc-200 px-4 py-3 text-sm"
+                        className="w-full rounded-2xl border border-zinc-200 px-4 py-3 text-base"
                         placeholder="Email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
@@ -55,7 +55,7 @@ export default function LoginClient() {
                         required
                     />
                     <input
-                        className="w-full rounded-2xl border border-zinc-200 px-4 py-3 text-sm"
+                        className="w-full rounded-2xl border border-zinc-200 px-4 py-3 text-base"
                         placeholder="Password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}

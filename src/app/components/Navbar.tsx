@@ -44,6 +44,7 @@ export default function Navbar({
                 { label: "HOME", href: "/", kind: "link" },
                 { label: "OUR STORY", href: "/our-story", kind: "link" },
                 { label: "SCHEDULE", href: "/schedule", kind: "link" },
+                { label: "SESSION", href: "/session", kind: "link" },
                 { label: "VENUE", href: "/venue", kind: "link" },
                 { label: "CONTACT", href: "/contact", kind: "link" },
             ],
@@ -90,6 +91,41 @@ export default function Navbar({
 
     const close = useCallback(() => setOpen(false), []);
 
+    function renderNavItem(it: NavItem, currentPath: string) {
+        if ("kind" in it && it.kind === "anchor") {
+            return (
+                <button
+                    key={it.label}
+                    className="text-[11px] font-semibold tracking-[0.18em] text-zinc-500 transition hover:text-[#7A0022]"
+                    onClick={() => {
+                        const el = document.getElementById(it.href.slice(1));
+                        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+                        history.replaceState(null, "", it.href);
+                    }}
+                >
+                    {it.label}
+                </button>
+            );
+        }
+        const isActive = currentPath === it.href;
+        return (
+            <Link
+                key={it.label}
+                href={it.href}
+                aria-current={isActive ? "page" : undefined}
+                className={[
+                    "relative text-[11px] font-semibold tracking-[0.18em] transition hover:text-[#7A0022]",
+                    isActive ? "text-[#7A0022]" : "text-zinc-500",
+                ].join(" ")}
+            >
+                {it.label}
+                {isActive && (
+                    <span className="absolute -bottom-[18px] left-1/2 h-0.5 w-4 -translate-x-1/2 rounded-full bg-[#7A0022]" />
+                )}
+            </Link>
+        );
+    }
+
     const Anchor = ({ href, label }: { href: `#${string}`; label: string }) => (
         <button
             className="w-full py-3.5 text-left text-[11px] font-semibold tracking-[0.18em] text-zinc-700 transition hover:text-[#7A0022]"
@@ -114,82 +150,46 @@ export default function Navbar({
             ].join(" ")}>
                 <div className="border-b border-black/6 bg-white/96 backdrop-blur-md">
                     <div className="mx-auto max-w-5xl px-5 sm:px-6">
-                        <div className="relative flex items-center justify-center py-4">
-
-                            {/* Hamburger — mobile only */}
+                        {/* Mobile bar: hamburger left, monogram centered, nothing right */}
+                        <div className="relative flex items-center justify-center py-4 lg:hidden">
                             <button
                                 aria-label={open ? "Close menu" : "Open menu"}
                                 aria-expanded={open}
-                                className="absolute left-0 inline-flex h-11 w-11 items-center justify-center text-zinc-700 transition hover:text-zinc-900 lg:hidden"
+                                className="absolute left-0 inline-flex h-11 w-11 items-center justify-center text-zinc-700 transition hover:text-zinc-900"
                                 onClick={() => setOpen((v) => !v)}
                             >
                                 <MenuIcon open={open} />
                             </button>
-
-                            {/* Desktop nav */}
-                            <nav className="absolute left-0 hidden items-center gap-6 lg:flex">
-                                {navItems.map((it) => {
-                                    if ("kind" in it && it.kind === "anchor") {
-                                        return (
-                                            <button
-                                                key={it.label}
-                                                className="text-[11px] font-semibold tracking-[0.18em] text-zinc-500 transition hover:text-[#7A0022]"
-                                                onClick={() => {
-                                                    const el = document.getElementById(it.href.slice(1));
-                                                    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-                                                    history.replaceState(null, "", it.href);
-                                                }}
-                                            >
-                                                {it.label}
-                                            </button>
-                                        );
-                                    }
-                                    const isActive = pathname === it.href;
-                                    return (
-                                        <Link
-                                            key={it.label}
-                                            href={it.href}
-                                            aria-current={isActive ? "page" : undefined}
-                                            className={[
-                                                "relative text-[11px] font-semibold tracking-[0.18em] transition hover:text-[#7A0022]",
-                                                isActive ? "text-[#7A0022]" : "text-zinc-500",
-                                            ].join(" ")}
-                                        >
-                                            {it.label}
-                                            {isActive && (
-                                                <span className="absolute -bottom-[18px] left-1/2 h-0.5 w-4 -translate-x-1/2 rounded-full bg-[#7A0022]" />
-                                            )}
-                                        </Link>
-                                    );
-                                })}
-                            </nav>
-
-                            {/* Monogram */}
                             <Link
                                 href="/"
                                 className="font-serif text-[15px] font-semibold tracking-[0.22em] text-[#7A0022] transition hover:text-zinc-800"
                             >
                                 {monogram}
                             </Link>
+                        </div>
 
-                            {/* Right actions */}
-                            <div className="absolute right-0 flex items-center gap-3">
-                                {/* <Link
-                                    href={rsvpHref}
-                                    className="inline-flex items-center justify-center rounded-full bg-[#7A0022] px-4 py-1.5 text-[10px] font-semibold tracking-[0.26em] text-white shadow-[0_4px_14px_rgba(122,0,34,0.25)] transition hover:bg-[#64001C]"
+                        {/* Desktop bar: left nav · monogram · right nav */}
+                        <div className="hidden items-center py-4 lg:flex">
+                            <nav className="flex flex-1 items-center gap-5">
+                                {navItems.slice(0, Math.ceil(navItems.length / 2)).map((it) => renderNavItem(it, pathname))}
+                            </nav>
+                            <Link
+                                href="/"
+                                className="shrink-0 px-8 font-serif text-[15px] font-semibold tracking-[0.22em] text-[#7A0022] transition hover:text-zinc-800"
+                            >
+                                {monogram}
+                            </Link>
+                            <nav className="flex flex-1 items-center justify-end gap-5">
+                                {navItems.slice(Math.ceil(navItems.length / 2)).map((it) => renderNavItem(it, pathname))}
+                            </nav>
+                            {isAdmin && (
+                                <Link
+                                    href="/admin"
+                                    className="ml-5 text-[11px] font-semibold tracking-[0.22em] text-zinc-400 transition hover:text-[#7A0022]"
                                 >
-                                    RSVP
-                                </Link>*/}
-                                {isAdmin && (
-                                    <Link
-                                        href="/admin"
-                                        className="hidden text-[11px] font-semibold tracking-[0.22em] text-zinc-400 transition hover:text-[#7A0022] sm:block"
-                                    >
-                                        Admin
-                                    </Link>
-                                )}
-                            </div>
-
+                                    Admin
+                                </Link>
+                            )}
                         </div>
                     </div>
                 </div>

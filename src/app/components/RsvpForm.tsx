@@ -67,10 +67,10 @@ function FieldLabel({ htmlFor, children }: { htmlFor?: string; children: React.R
 }
 
 const inputBase =
-  "mt-2 w-full rounded-2xl border border-zinc-200 bg-white px-4 py-3.5 text-sm text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-[#7A0022]/40 focus:ring-2 focus:ring-[#7A0022]/8";
+  "mt-2 w-full rounded-2xl border border-zinc-200 bg-white px-4 py-3.5 text-base text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-[#7A0022]/40 focus:ring-2 focus:ring-[#7A0022]/8";
 
 const selectBase =
-  "mt-2 w-full rounded-2xl border border-zinc-200 bg-white px-4 py-3.5 text-sm text-zinc-900 outline-none transition focus:border-[#7A0022]/40 focus:ring-2 focus:ring-[#7A0022]/8";
+  "mt-2 w-full rounded-2xl border border-zinc-200 bg-white px-4 py-3.5 text-base text-zinc-900 outline-none transition focus:border-[#7A0022]/40 focus:ring-2 focus:ring-[#7A0022]/8";
 
 function SectionDivider() {
   return <div className="h-px bg-black/5" />;
@@ -422,7 +422,7 @@ export default function RsvpForm({ lockedSession }: Props) {
             </FieldLabel>
             <input
               id="rsvp-kids"
-              className="mt-2 w-full cursor-default rounded-2xl border border-zinc-100 bg-zinc-50 px-4 py-3.5 text-sm text-zinc-400 select-none"
+              className="mt-2 w-full cursor-default rounded-2xl border border-zinc-100 bg-zinc-50 px-4 py-3.5 text-base text-zinc-400 select-none"
               value={kids}
               readOnly
               aria-readonly="true"
@@ -446,7 +446,7 @@ export default function RsvpForm({ lockedSession }: Props) {
           onChange={(e) => setMessage(e.target.value)}
           rows={4}
           maxLength={400}
-          className="mt-2 w-full rounded-2xl border border-zinc-200 bg-white px-4 py-3.5 text-sm text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-[#7A0022]/40 focus:ring-2 focus:ring-[#7A0022]/8 resize-none"
+          className="mt-2 w-full rounded-2xl border border-zinc-200 bg-white px-4 py-3.5 text-base text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-[#7A0022]/40 focus:ring-2 focus:ring-[#7A0022]/8 resize-none"
           placeholder="Write a short wish..."
         />
         <p className="mt-1.5 text-right text-[11px] text-zinc-300" aria-live="polite">

@@ -25,6 +25,13 @@ function FadeUp({
   );
 }
 
+const SESSIONS = [
+  { label: "Session 1", start: "2026-05-02T15:00:00+08:00", end: "2026-05-02T16:30:00+08:00", display: "3:00 PM – 4:30 PM" },
+  { label: "Session 2", start: "2026-05-02T16:30:00+08:00", end: "2026-05-02T17:30:00+08:00", display: "4:30 PM – 5:30 PM" },
+  { label: "Session 3", start: "2026-05-02T17:30:00+08:00", end: "2026-05-02T20:00:00+08:00", display: "5:30 PM – 8:00 PM" },
+];
+
+
 function getTimeLeft(target: string) {
   const diff = Math.max(0, new Date(target).getTime() - Date.now());
   return {
@@ -34,6 +41,42 @@ function getTimeLeft(target: string) {
     seconds: Math.floor((diff % 60000) / 1000),
     done: diff === 0,
   };
+}
+
+function HappeningNow() {
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 5000);
+    return () => clearInterval(id);
+  }, []);
+
+  const allEnded = now >= new Date(SESSIONS[SESSIONS.length - 1].end);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.92, y: 6 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+      className="flex flex-col items-center gap-3"
+    >
+      {/* Pulse badge */}
+      <div className="relative flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 backdrop-blur-sm">
+        {!allEnded && (
+          <>
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#F4D7DA] opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-white" />
+            </span>
+          </>
+        )}
+        <span className="text-[10px] font-semibold uppercase tracking-[0.38em] text-white">
+          {allEnded ? "Thank you for coming!" : "Happening Now"}
+        </span>
+      </div>
+
+    </motion.div>
+  );
 }
 
 function Countdown({ target }: { target: string }) {
@@ -46,11 +89,7 @@ function Countdown({ target }: { target: string }) {
 
   if (!t) return null;
 
-  if (t.done) {
-    return (
-      <p className="text-sm font-semibold tracking-[0.3em] text-white/80">TODAY</p>
-    );
-  }
+  if (t.done) return <HappeningNow />;
 
   const units = [
     { value: t.days, label: "DAYS" },

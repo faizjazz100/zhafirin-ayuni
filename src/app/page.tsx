@@ -11,6 +11,7 @@ import HomeContactCards from "./components/HomeContactCards";
 import DirectionModal from "./components/DirectionModal";
 import LinkTracker from "./components/LinkTracker";
 import HeroSection from "./components/HeroSection";
+import SessionCards from "./components/SessionCards";
 
 // ─── Page data ────────────────────────────────────────────────────────────────
 const COUPLE = "Zhafirin & Ayuni";
@@ -100,6 +101,9 @@ export default function Page() {
 
       {/* ── CONTENT SECTIONS ─────────────────────────────────────────────────── */}
       <div className="mx-auto max-w-5xl px-5 pb-16 pt-14 sm:px-6 sm:pb-24">
+
+        {/* Session Summary Cards */}
+        <SessionCards />
 
         {/* Wishes */}
         <MessageCarouselSection />
